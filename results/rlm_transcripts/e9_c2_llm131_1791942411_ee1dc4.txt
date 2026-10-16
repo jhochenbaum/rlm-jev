@@ -1,0 +1,79 @@
+Query: In the above data, how many data points should be classified as label 'description and abstract concept'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500]); print(context[-500:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500]); print(context[-500:])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+s BPH ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines = [l for l in context.split("\n") if l.startswith("Date:") and "Instance:" in l]
+qs = [l.split("Instance:",1)[1].strip() for l in lines]
+print(len(qs))
+
+cats = ['numeric value','entity','human being','location','abbreviation','description and abstract concept']
+def mk(chunk, start):
+    body = "\n".join(f"{start+i}: {q}" for i,q in enumerate(chunk))
+    return ("Classify each question by the type of its answer (TREC question classification) into exactly one of: "
+            "'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n"
+            "Reply with one line per question formatted 'index: label' and nothing else.\n\n" + body)
+size = 80
+prompts = [mk(qs[i:i+size], i) for i in range(0, len(qs), size)]
+res = []
+for i in range(0, len(prompts), 8):
+    res += llm_query_batched(prompts[i:i+8])
+labels = {}
+for r in res:
+    for m in re.finditer(r"(\d+)\s*:\s*(numeric value|entity|human being|location|abbreviation|description and abstract concept)", r):
+        labels[int(m.group(1))] = m.group(2)
+print(len(labels))
+from collections import Counter
+print(Counter(labels.values()))
+```
+OUTPUT:
+3182
+3182
+Counter({'entity': 593, 'description and abstract concept': 570, 'abbreviation': 556, 'location': 541, 'human being': 521, 'numeric value': 401})
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: 570")
+```
+FINAL: Answer: 570

@@ -1,0 +1,309 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: description and abstract concept is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-3:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+25540
+['You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+inst = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m: inst.append(m.group(1))
+print(len(inst), len(set(inst)))
+uniq = list(set(inst))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money, distance, duration, percentage, or other numeric value',
+ 'entity': 'answer is a thing: animal, food, product, body part, color, sport, work, substance, event, etc.',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'human being': 'answer is a person, group of people, or individual',
+ 'location': 'answer is a place such as a country, city, mountain, or state',
+}
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+from collections import Counter
+pred = {}
+for q, r in zip(uniq, res):
+    pred[q] = max(r, key=r.get)
+c = Counter(pred[q] for q in inst)
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 4891, 'abbreviation': 4808, 'description and abstract concept': 4319, 'entity': 4300, 'location': 3703, 'numeric value': 3510})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+for lab in labels:
+    qs = [q for q in uniq if pred[q]==lab]
+    print("==", lab, len(qs))
+    for q in random.sample(qs, 8): print("   ", q)
+```
+OUTPUT:
+== description and abstract concept 872
+    What is a `` repeating voter '' ?
+    What are differences between 1980 and 1990 ?
+    How is bubble wrap made ?
+    How you can raise your IQ ?
+    What was the effect of the Yalta Conference ?
+    What is hypnotherapy ?
+    How do I find the balance of my social security account ?
+    How do you look up criminal records on the Internet ?
+== numeric value 656
+    What is the population of Mozambique ?
+    How many different vegetation zones are there ?
+    How long should a person wash their hands before they are clean ?
+    How many people hike ?
+    How long did the Paris Commune hold out for against the rest of France ?
+    How many films did Ingmar Bergman make ?
+    How many villi are found in the small intestine ?
+    How hot does the inside of an active volcano get ?
+== entity 902
+    What is `` the computer for the rest of us '' ?
+    What is the nickname of Pennsylvania ?
+    Name a novel written by John Steinbeck .
+    What kind of creature is a coot ?
+    What arch can you see from the Place de la Concorde ?
+    How do I find a snowboarding website ?
+    What did Louis Cartier invent for aviator Santos Dumont in 1940 ?
+    What is the name of the Jewish alphabet ?
+== abbreviation 75
+    What does BMW stand for ?
+    What is the abbreviated form of the National Bureau of Investigation ?
+    What does `` B.Y.O.B. '' mean ?
+    What do the letters D.C. stand for in Washington , D.C. ?
+    What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+    What does SIDS stand for ?
+    What is SAP ?
+    What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+== human being 976
+    Who found Hawaii ?
+    What character narrates Treasure Island ?
+    Who was Sherlock Holmes 's archenemy ?
+    Who else was considered for the role of Luke Skywalker when George Lucas was casting for Star Wars ?
+    What are the names of Jacques Cousteau 's two sons ?
+    What comedienne upstaged Dwight D. Eisenhower 's first inauguration by giving birth to her first child ?
+    What actor was the first man to appear on the cover of McCall 's ?
+    What 's the name of Popeye 's adopted son ?
+== location 670
+    What province is Edmonton located in ?
+    What city is . KDGE Radio located in ?
+    What Asian country once thrilled to the sport of cricket fighting ?
+    What cathedral was Thomas Becket murdered in ?
+    What is the name of the country which Hitler ruled ?
+    Where are zebras most likely found ?
+    Where were the 1936 Summer Olympics held ?
+    Where is one 's corpus callosum found ?
+
+
+--- turn 3 ---
+```python
+def rule(q):
+    ql = q.lower()
+    if re.search(r"\bhow (many|much|long|far|old|tall|high|big|fast|hot|large|deep|wide|often)\b", ql) or re.search(r"\bwhat (year|date|day|percentage|number|is the population|time)\b", ql) or ql.startswith("when "):
+        return 'numeric value'
+    if re.search(r"\b(stand for|abbreviat|acronym)\b", ql): return 'abbreviation'
+    if ql.startswith("why ") or ql.startswith("how do") or ql.startswith("how does") or ql.startswith("how can") or ql.startswith("what is the meaning") or re.match(r"what (is|are) (a|an)\b", ql) or ql.startswith("what causes") or "definition" in ql:
+        return 'description and abstract concept'
+    return None
+rc = Counter(); agree = Counter()
+for q in inst:
+    r = rule(q)
+    if r:
+        rc[r]+=1
+        agree[(r, pred[q])]+=1
+print(rc)
+print(agree)
+```
+OUTPUT:
+Counter({'numeric value': 2887, 'abbreviation': 2697, 'description and abstract concept': 1719})
+Counter({('numeric value', 'numeric value'): 2772, ('abbreviation', 'abbreviation'): 2563, ('description and abstract concept', 'description and abstract concept'): 1560, ('abbreviation', 'description and abstract concept'): 134, ('description and abstract concept', 'entity'): 119, ('numeric value', 'abbreviation'): 65, ('description and abstract concept', 'human being'): 35, ('numeric value', 'entity'): 20, ('numeric value', 'description and abstract concept'): 15, ('numeric value', 'location'): 10, ('description and abstract concept', 'location'): 5, ('numeric value', 'human being'): 5})
+
+
+--- turn 4 ---
+```python
+cnt = Counter(inst)
+print(len(cnt), cnt.most_common(5))
+# examine weighted contribution of top questions for desc and numeric predictions
+for lab in ['description and abstract concept','numeric value']:
+    top = sorted([q for q in cnt if pred[q]==lab], key=lambda q:-cnt[q])[:25]
+    print("==", lab)
+    for q in top: print(cnt[q], q)
+```
+OUTPUT:
+4151 [('What does the E stand for in the equation E=mc2 ?', 65), ('What is AFS ?', 65), ('What does BMW stand for ?', 65), ('What does BTU mean ?', 65), ('What is HDLC ?', 65)]
+== description and abstract concept
+65 What does the E stand for in the equation E=mc2 ?
+65 What is HTML ?
+64 What does the `` c '' stand for in the equation E=mc2 ?
+64 What does JESSICA mean ?
+64 What does NN O `` mean when used as a prefix in Irish surnames ?
+6 What part did Benjamin Franklin play in the development of the newspaper in America ?
+6 Where does the weird shape of the dinner fish knife originate from ?
+5 How does hair curl ?
+5 How can I find out my biorhythm ?
+5 What are the living conditions in Cuba ?
+5 How do I impress a guy ?
+5 What is an urban legend ?
+5 What is God ?
+5 What is the history of yo-yos ?
+5 What is a portal ?
+5 How does a rainbow form ?
+5 What did Mighty Mouse always sing as he went into action ?
+5 What are the words to the song sung by `` Banana in Pajamas '' ?
+5 Why do many Native American students not complete college ?
+5 What do you know about multicultural and multilingual schools ?
+5 What is the `` 7-minute cigarette '' ?
+5 What is the difference between classical conditioning and operant conditioning ?
+5 How do I find the balance of my social security account ?
+5 What is the spectrum of a sine wave ?
+5 Why do rooftops give off steam after a big rainstorm ?
+== numeric value
+6 How long do cardinal eggs incubate ?
+6 The italian artist , Maurizio Pellegrin , is how old ?
+6 How many films did Ingmar Bergman make ?
+6 Dialing , 900 , 740-TREE to have a tree planted will cost how much ?
+6 How many films are made by the major studios in a year ?
+6 How many stars are there in Big Dipper ?
+6 In what year did Thatcher gain power ?
+6 How many chairs are shown in Vincent Van Gogh 's 188 work The Artist 's Room in Arles ?
+6 What is the population of the largest Chilean city
+6 How many spaces follow a period at the end of a sentence ?
+6 In what year was the movie the Ten Commandments released ?
+6 What does an average daycare provider get paid in New England ?
+6 What year was the ATM first introduced ?
+6 How many points are there on a Backgammon board ?
+6 What year did Degas create the bronze sculpture , `` Fourth Position Front ? ''
+6 How long was the OJ Simpson trial ?
+6 What year did Hitler die ?
+6 How many cities are there in Utah ?
+6 How many calories are there in a glass of water ?
+6 How long did the Paris Commune hold out for against the rest of France ?
+6 How many bones are in the human hand ?
+6 How many `` eyes '' does a coconut have ?
+6 How much stronger is the new vitreous carbon material invented by the Tokyo Institute of Technology compared with the material made from cellulose ?
+6 How many shillings more than 2 were there in a guinea ?
+6 How many people live in Tokyo ?
+
+
+--- turn 5 ---
+```python
+heavy = [q for q in cnt if cnt[q] >= 20]
+print(len(heavy), sum(cnt[q] for q in heavy))
+print(Counter(pred[q] for q in heavy))
+for q in heavy:
+    if pred[q] != 'abbreviation': print(cnt[q], pred[q], q)
+# counts of the light questions
+light = Counter()
+for q in inst:
+    if cnt[q] < 20: light[pred[q]] += 1
+print(light)
+print(Counter(cnt.values()).most_common(10))
+```
+OUTPUT:
+81 5195
+Counter({'abbreviation': 75, 'description and abstract concept': 5, 'entity': 1})
+65 description and abstract concept What does the E stand for in the equation E=mc2 ?
+65 entity What is DEET ?
+65 description and abstract concept What is HTML ?
+64 description and abstract concept What does the `` c '' stand for in the equation E=mc2 ?
+64 description and abstract concept What does JESSICA mean ?
+64 description and abstract concept What does NN O `` mean when used as a prefix in Irish surnames ?
+Counter({'human being': 4891, 'entity': 4235, 'description and abstract concept': 3997, 'location': 3703, 'numeric value': 3510})
+[(5, 1927), (6, 1156), (4, 826), (3, 140), (65, 35), (64, 29), (2, 20), (63, 10), (62, 7), (1, 1)]
+
+
+--- turn 6 ---
+```python
+import numpy as np
+light_q = [q for q in cnt if cnt[q] < 20]
+idx = {q:i for i,q in enumerate(uniq)}
+exp = Counter()
+for q in light_q:
+    r = res[idx[q]]
+    for k,v in r.items(): exp[k] += v*cnt[q]
+print({k: round(v) for k,v in exp.items()})
+# sample light desc preds, weighted by confidence
+random.seed(1)
+d = [q for q in light_q if pred[q]=='description and abstract concept']
+for q in random.sample(d, 40): print(round(res[idx[q]]['description and abstract concept'],2), q)
+```
+OUTPUT:
+{'description and abstract concept': 3986, 'numeric value': 3523, 'entity': 4273, 'abbreviation': 40, 'human being': 4861, 'location': 3653}
+0.98 What is the difference between the anus and the rectum ?
+0.7 What is a Guild ?
+0.75 What are tannins ?
+1.0 Why did Egyptians shave their eyebrows ?
+1.0 What does `` saute '' mean ?
+0.81 What part did Benjamin Franklin play in the development of the newspaper in America ?
+0.81 What kind of greeting is appropriate to send on Yom Kippur ?
+0.78 What 's a short ton ?
+0.98 How do you reference a website ?
+0.99 What do the 12 days of Christmas mean ?
+1.0 What is literary criticism ?
+0.99 Why does tuberculosis afflict people ?
+0.7 What are liver enzymes ?
+0.58 What is the origin of the word `` tampon '' ?
+0.99 How is ` qigong ' properly pronounced ?
+1.0 How do microwaves work ?
+0.98 What is chromatology ?
+0.98 How do I e-mail someone at aol.com from yahoo.com ?
+1.0 Why are there no white lines on pro footballs ?
+0.99 How do birds have sex ?
+0.51 From what cause does tuberculosis stem ?
+0.71 What was the claim to fame of Explorer I , launched February 1 , 1958 ?
+1.0 What is the difference between a college and a university ?
+0.75 What 's the state motto of California ?
+0.99 How can I find out my biorhythm ?
+1.0 Why is hockey so violent ?
+0.88 How can I find online spelling ?
+0.97 How do I love thee ?
+1.0 How do you dunk ?
+1.0 What does seccession mean ?
+0.54 What is the literal meaning of `` D-DAY '' ?
+1.0 How do you make dumplings ?
+0.99 What is the difference between a classical and an acoustic guitar ?
+0.98 What personality traits are Capricorns said to have ?
+1.0 How can you define time ?
+0.87 What is the history of the soft drink Mr. Pibb ?
+0.94 Why is Rush 's 2112 called 2112 ?
+0.94 What is meant by blood SED rate ?
+1.0 How does a rainbow form ?
+0.67 How do I find out the exact time of a sunset for a particular day ?
+
+
+--- turn 7 ---
+```python
+FINAL("Answer: description and abstract concept is more common than numeric value")
+```
+FINAL: Answer: description and abstract concept is more common than numeric value

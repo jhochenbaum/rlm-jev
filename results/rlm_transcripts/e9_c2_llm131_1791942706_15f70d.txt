@@ -1,0 +1,68 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[5:15])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+3191
+["Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?", "Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?", 'Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?', 'Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?', 'Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?', 'Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?', "Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?", 'Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?', "Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?", 'Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?']
+
+
+--- turn 1 ---
+```python
+import re
+qs = [l.split("Instance: ",1)[1] for l in lines if "Instance: " in l]
+print(len(qs))
+cats = ['numeric value','entity','human being','location','abbreviation','description and abstract concept']
+def mk(chunk, start):
+    s = "Classify each question by the category of its answer (TREC style): 'numeric value', 'entity' (things, animals, products, foods, creative works, events, etc.), 'human being', 'location', 'abbreviation', 'description and abstract concept'.\nReply with one line per question, formatted 'N: category', no other text.\n\n"
+    s += "\n".join(f"{start+i}: {q}" for i,q in enumerate(chunk))
+    return s
+B=100
+starts=list(range(0,len(qs),B))
+prompts=[mk(qs[s:s+B],s) for s in starts]
+res=[]
+for i in range(0,len(prompts),8):
+    res+=llm_query_batched(prompts[i:i+8])
+labels={}
+for r in res:
+    for m in re.finditer(r"(\d+)\s*:\s*(numeric value|entity|human being|location|abbreviation|description and abstract concept)", r):
+        labels[int(m.group(1))]=m.group(2)
+print(len(labels))
+from collections import Counter
+print(Counter(labels.values()))
+```
+OUTPUT:
+3182
+3182
+Counter({'entity': 608, 'description and abstract concept': 555, 'abbreviation': 554, 'location': 536, 'human being': 526, 'numeric value': 403})
+
+
+--- turn 2 ---
+```python
+FINAL("Answer: 608")
+```
+FINAL: Answer: 608

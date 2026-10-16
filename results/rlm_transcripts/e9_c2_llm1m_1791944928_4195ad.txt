@@ -1,0 +1,153 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: description and abstract concept is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500]); print(context[-500:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500]); print(context[-500:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines=[l for l in context.split("\n") if "|| Instance:" in l]
+qs=[l.split("|| Instance:",1)[1].strip() for l in lines]
+print(len(qs))
+labs=['description and abstract concept','numeric value','entity','abbreviation','human being','location']
+codes={'D':0,'N':1,'E':2,'A':3,'H':4,'L':5}
+def mk(chunk):
+    s=("Classify each question by the type of its answer (TREC categories). Codes: D=description and abstract concept (definitions, reasons, manner, descriptions), "
+       "N=numeric value (numbers, dates, money, counts, distances), E=entity (things, animals, foods, products, events, etc.), A=abbreviation (abbreviations or what an abbreviation stands for), "
+       "H=human being (person, group, individual), L=location (places, countries, cities).\n"
+       "Reply with exactly one line per question in the format 'index:CODE', nothing else.\n\n")
+    return s+"\n".join(f"{i}: {q}" for i,q in enumerate(chunk))
+size=100
+chunks=[qs[i:i+size] for i in range(0,len(qs),size)]
+print(len(chunks))
+res=llm_query_batched([mk(c) for c in chunks[:8]])
+print(res[0][:300])
+```
+OUTPUT:
+25531
+256
+0:L
+1:H
+2:A
+3:E
+4:H
+5:H
+6:N
+7:N
+8:H
+9:L
+10:D
+11:E
+12:N
+13:A
+14:A
+15:D
+16:E
+17:A
+18:A
+19:L
+20:E
+21:A
+22:L
+23:N
+24:N
+25:H
+26:D
+27:L
+28:L
+29:H
+30:E
+31:L
+32:N
+33:A
+34:D
+35:H
+36:N
+37:D
+38:H
+39:A
+40:L
+41:N
+42:D
+43:L
+44:A
+45:D
+46:A
+47:E
+48:A
+49:L
+50:L
+51:N
+52:A
+53:A
+54:D
+55:H
+56:H
+57:E
+58:H
+59:N
+60:L
+61:A
+
+
+
+--- turn 3 ---
+```python
+import re
+from collections import Counter
+cnt=Counter()
+allres=[]
+for b in range(0,len(chunks),8):
+    batch=chunks[b:b+8]
+    out=llm_query_batched([mk(c) for c in batch])
+    allres.extend(out)
+for r in allres:
+    for m in re.finditer(r'^\s*\d+\s*:\s*([DNEAHL])',r,re.M):
+        cnt[m.group(1)]+=1
+print(cnt, sum(cnt.values()))
+```
+OUTPUT:
+Counter({'H': 5125, 'A': 4992, 'D': 4274, 'L': 3901, 'E': 3733, 'N': 3506}) 25531
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: description and abstract concept is more common than numeric value")
+```
+FINAL: Answer: description and abstract concept is more common than numeric value

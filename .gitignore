@@ -1,0 +1,29 @@
+# --- secrets & local environment ---
+.env.local
+.env
+.venv/
+__pycache__/
+*.log
+
+# --- private: working notes, research digests, drafts and social posts (never published from this repo) ---
+private/
+
+# --- large or regenerable data (experiments/setup_data.py downloads it) ---
+data/
+
+# --- spend ledgers: internal bookkeeping; totals are published in results/summary.json.
+#     rlm_ledger.jsonl also holds BrowseComp-Plus question text, which must never be published.
+ledger.jsonl
+claude_ledger.jsonl
+rlm_ledger.jsonl
+
+# --- BrowseComp-Plus: the benchmark asks that questions/answers never appear online in plain text ---
+results/rlm_transcripts/e12_*
+results/e12_bcp*.jsonl
+
+# --- run bookkeeping ---
+*.pid
+results/*_log.txt
+experiments/scratch/
+jev-baselines-bundle.tgz
+results/e5c_ckpt_*.npz

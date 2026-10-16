@@ -1,0 +1,189 @@
+Query: In the above data, how many data points should be classified as label 'numeric value'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-3:])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+3191
+['You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+data = [l for l in context.split("\n") if "|| Instance:" in l]
+qs = [l.split("|| Instance:",1)[1].strip() for l in data]
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'numeric value': 'answer is a number, count, date, money amount, measurement, percentage, duration, etc.',
+ 'entity': 'answer is a thing: animal, food, product, body part, color, language, sport, event, substance, work, etc.',
+ 'human being': 'answer is a person or group of people, or an individual described by occupation',
+ 'location': 'answer is a place: country, city, state, mountain, river, address, etc.',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+ 'description and abstract concept': 'answer is a definition, description, manner, reason, or abstract concept',
+}
+res = jev_classify(uq, labels, instruction="What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+from collections import Counter
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+3182 2692
+Counter({'entity': 654, 'description and abstract concept': 556, 'location': 535, 'abbreviation': 533, 'human being': 500, 'numeric value': 404})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+for lab in ['abbreviation','numeric value']:
+    s = [q for q in uq if pred[q]==lab]
+    print(lab, len(s))
+    for q in random.sample(s, 25): print("  ", q)
+```
+OUTPUT:
+abbreviation 75
+   What is BPH ?
+   What do the letters D.C. stand for in Washington , D.C. ?
+   What does the abbreviation AIDS stand for ?
+   What does S.O.S. stand for ?
+   What is the abbreviation of General Motors ?
+   What does NAFTA stand for ?
+   What is LMDS ?
+   What does Ms. , Miss , and Mrs. stand for ?
+   What does the T.S. stand for in T.S. Eliot 's name ?
+   What does LOL mean ?
+   What is the abbreviation of the International Olympic Committee ?
+   What is p.m. an abbreviation for , as in 5 p.m. ?
+   CNN is the abbreviation for what ?
+   What does the abbreviation IOC stand for ?
+   What does ` PSI ' stand for ?
+   What is the abbreviated expression for the National Bureau of Investigation ?
+   What does IQ stand for ?
+   What does A&W of root beer fame stand for ?
+   What 's the abbreviation for trinitrotoluene ?
+   What does e.g. stand for ?
+   What does the word LASER mean ?
+   What is the abbreviated term used for the National Bureau of Investigation ?
+   What does the channel ESPN stand for ?
+   What is the acronym for the National Bureau of Investigation ?
+   What is the full name of the PLO ?
+numeric value 404
+   How tall is the giraffe ?
+   What was the death toll at the eruption of Mount Pinatubo ?
+   How many thousands of students attend the University of Massachusetts ?
+   What is the probability that at least 2 out of 25 people will have the same birthday ?
+   How many pins are used in skittles ?
+   How many hummingbird eggs could fit in one ostrich egg ?
+   How many feet are there in a fathom ?
+   What is President Nixon 's birthdate ?
+   What is the world population as of today ?
+   How many people die from snakebite poisoning in the U.S. per year ?
+   How many islands does Fiji have ?
+   What are the Arabic Numerals from 1 to 10 ?
+   About how many soldiers died in World War II ?
+   How many logarithmic scales are there on a slide rule ?
+   How many corners does a spritsail have ?
+   How many seats does the Batmobile sport ?
+   How long do you have to pay back debt after claiming chapter 11 bankruptcy ?
+   How many pairs of wings does a tsetse fly have ?
+   How many maids were milking ?
+   What is the fine for having a dog on a beach ?
+   How much money does the Sultan of Brunei have ?
+   How many letters appear with the numbers 2 to 9 on a telephone dial ?
+   How big is Australia ?
+   What does 7847+5943 equal ?
+   How much did the first Barbie doll sell for in 1959 ?
+
+
+--- turn 3 ---
+```python
+import re
+num_p = {q: r['numeric value'] for q, r in zip(uq, res)}
+# non-numeric predictions that look numeric by keywords
+kw = re.compile(r"^(how (many|much|long|far|old|tall|big|fast|high|large|hot|cold|deep|wide|heavy)|what (year|date|day|percentage|percent|number|temperature|time|age|population|distance|size|speed|weight|height)|when|in what year|what is the (population|height|length|speed|number|cost|price|average|area|weight|distance|temperature))", re.I)
+miss = [q for q in uq if pred[q]!='numeric value' and kw.search(q)]
+print(len(miss))
+for q in miss[:60]: print(pred[q][:6], round(num_p[q],2), q)
+# numeric preds not matching keyword
+odd = [q for q in uq if pred[q]=='numeric value' and not kw.search(q)]
+print(len(odd))
+for q in odd[:40]: print(round(num_p[q],2), q)
+```
+OUTPUT:
+2
+locati 0.0 When Superman needs to get away from it all , where does he go ?
+descri 0.0 When reading classified ads , what does EENTY : other stand for ?
+82
+1.0 In which year was New Zealand excluded from the ANZUS alliance ?
+0.99 What was the first minimum wage ?
+1.0 What is Columbia Tristar 's phone number ?
+1.0 What was the target rate for M3 growth in 1992 ?
+1.0 What is the fine for having a dog on a beach ?
+1.0 What is Judy Garland 's date of birth ?
+1.0 The Shea & Gould law firm had an office in L.A. for how many years ?
+1.0 In South Korea , how many American Soldiers are there ?
+1.0 What is President Nixon 's birthdate ?
+1.0 What is the starting salary of a radiographer ?
+1.0 CNN began broadcasting in what year ?
+0.96 What 's the score of a forfeited baseball game ?
+1.0 What is the approximate population of Las Vegas , N.M ?
+1.0 On average , how many miles are there to the moon ?
+1.0 What is the recommended daily requirement for folic acid for pregnant women ?
+1.0 What ratio of children of ages between two and eleven watch ` The Simpsons ' ?
+1.0 Dialing , 900 , 740-TREE to have a tree planted will cost how much ?
+1.0 What was the minimum wage in 1991 ?
+0.98 What is the size of the largest akita ?
+0.79 What is the world record for the longest hair ?
+1.0 What is the acreage of the Chappellet vineyard ?
+1.0 What 's the maximum number of clubs a golfer may use in a round ?
+0.99 What 's men 's par on a 455-yard golf hole ?
+0.97 What are the lengths of pearl necklaces ?
+1.0 What is the telephone number for the University of Kentucky ?
+1.0 What is the size of Argentina ?
+1.0 What is the gestation period for human pregnancies ?
+0.84 What are the numbers that fit into Fermont 's last theorem ?
+1.0 What is the life span of the average monkey ?
+0.99 What was the price of Varian Associates ' vacuum products division ?
+0.51 How effective are condoms in protecting against AIDS ?
+0.92 What is the frequency of VHF ?
+1.0 On which date is the Ukrainians ' Christmas ?
+1.0 What is the world population as of today ?
+0.99 What is the current population for these countries : France , Spain , Italy , Greece , Austria , Germany , Switzerland , the Netherlands ?
+1.0 What is the amount of money owed for illegally having a dog on a beach ?
+0.54 What is the deepest area of the Arctic Ocean ?
+0.95 What century 's the setting for TV 's The Adventures of Robin Hood ?
+1.0 What was the number of assassinations and attempts to assassinate in the U.S. since 1865 ?
+1.0 What amount of folic acid should an expectant mother take daily ?
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: 404")
+```
+FINAL: Answer: 404

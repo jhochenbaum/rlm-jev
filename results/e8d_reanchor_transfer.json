@@ -1,0 +1,16 @@
+{
+ "weights_from": "E8c DSPy-native ReAnchor fit",
+ "heldout_n": 3851,
+ "unweighted": {
+  "record_acc": 0.945468709426123,
+  "count_relerr": 0.07889454828770354,
+  "oolong_overall": 0.7459166756635646,
+  "oolong_131k": 0.7121522200810229
+ },
+ "dspy_weights": {
+  "record_acc": 0.8662685016878733,
+  "count_relerr": 0.2314784339246498,
+  "oolong_overall": 0.6123653055349245,
+  "oolong_131k": 0.41410166044487906
+ }
+}

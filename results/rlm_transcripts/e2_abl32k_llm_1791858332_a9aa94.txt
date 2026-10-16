@@ -1,0 +1,96 @@
+Query: In the above data, is label 'entity' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: entity is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print(context[-500:])
+lines = context.split("\n")
+print(len(lines))
+</br>```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 5
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print(context[-500:])
+lines = context.split("\n")
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: Aug 09, 2022 || User: 58652 || Instance: What does LOL mean ?
+Date: May 23, 2025 || User: 50108 || Instance: Where did the Japanese Imperial Forces surrender to end WWII ?
+Date: Apr 17, 2022 || User: 87943 || Instance: What is the abbreviation of the International Olympic Committee ?
+Date: Jan 04, 2
+al name ?
+Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+796
+
+
+--- turn 2 ---
+```python
+import re
+qs = [l.split("Instance: ",1)[1] for l in lines if "|| Instance: " in l]
+print(len(qs))
+cats = ['location','human being','entity','abbreviation','numeric value','description and abstract concept']
+chunks = [qs[i:i+50] for i in range(0,len(qs),50)]
+def mk(ch):
+    s = "Classify each question by the type of its answer into exactly one of: location, human being, entity, abbreviation, numeric value, description and abstract concept.\n(TREC question classification: 'entity' covers things like animals, foods, products, colors, sports, creative works, etc.; 'abbreviation' covers abbreviations/expansions; 'numeric value' covers numbers, dates, money, distances, etc.)\nReply with one line per question formatted as 'N: label', N from 1 to %d, nothing else.\n\n" % len(ch)
+    s += "\n".join(f"{i+1}. {q}" for i,q in enumerate(ch))
+    return s
+prompts = [mk(c) for c in chunks]
+res = []
+for i in range(0,len(prompts),8):
+    res += llm_query_batched(prompts[i:i+8])
+from collections import Counter
+cnt = Counter(); tot=0
+for ch,r in zip(chunks,res):
+    got = {}
+    for m in re.finditer(r'(\d+)\s*[:.]\s*(.+)', r):
+        got[int(m.group(1))] = m.group(2).strip().lower()
+    tot += len(got)
+    if len(got)!=len(ch): print("mismatch", len(got), len(ch))
+    for v in got.values():
+        for c in cats:
+            if v.startswith(c):
+                cnt[c]+=1; break
+        else:
+            cnt['other:'+v]+=1
+print(tot, cnt)
+```
+OUTPUT:
+787
+787 Counter({'entity': 174, 'human being': 153, 'abbreviation': 130, 'numeric value': 117, 'location': 101, 'description and abstract concept': 70, 'other:description': 42})
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: entity is more common than numeric value")
+```
+FINAL: Answer: entity is more common than numeric value

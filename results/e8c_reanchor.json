@@ -1,0 +1,64 @@
+{
+ "trec_choice_weights": {
+  "train_score_before": 0.94,
+  "train_score": 0.9533,
+  "fitted": [
+   {
+    "predictor": "self",
+    "field": "label",
+    "parameter": "weights",
+    "value": {
+     "description and abstract concept": 1.0,
+     "entity": 0.03,
+     "human being": 1.0,
+     "numeric value": 1.0,
+     "location": 1.0,
+     "abbreviation": 1.0
+    },
+    "train_score": 0.9533,
+    "train_score_at_start": 0.94,
+    "observed": {
+     "calls": 300,
+     "candidates": 153
+    },
+    "fold_check": {
+     "passed": 1,
+     "failed": 1
+    },
+    "train_score_original": 0.94
+   }
+  ],
+  "val_score_before": 0.941,
+  "val_score": 0.949
+ },
+ "trec_count_relerr_before": 0.1129,
+ "trec_count_relerr_after": 0.063,
+ "spam_noul_threshold": {
+  "train_score_before": 0.99,
+  "train_score": 0.99,
+  "fitted": [
+   {
+    "predictor": "self",
+    "field": "is_spam",
+    "parameter": "threshold",
+    "train_score": 0.99,
+    "train_score_at_start": 0.99,
+    "observed": {
+     "calls": 300,
+     "distinct": 43,
+     "min": 0.01,
+     "max": 0.99,
+     "candidates": 40
+    },
+    "fold_check": {
+     "passed": 0,
+     "failed": 0
+    },
+    "train_score_original": 0.99,
+    "skipped": "fitted behavior did not beat the original"
+   }
+  ],
+  "val_score_before": 0.988,
+  "val_score": 0.988
+ }
+}

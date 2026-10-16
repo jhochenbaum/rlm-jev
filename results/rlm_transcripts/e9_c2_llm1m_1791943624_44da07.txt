@@ -1,0 +1,73 @@
+Query: For the following question, only consider the subset of instances that are associated with user IDs 50824. Among instances associated with these users, which of the labels is the most common? Give your final answer in the form 'Label: answer' where answer is one of the labels: abbreviation, entity, location, numeric value, description and abstract concept.
+
+`context` is a str of 2,486,714 characters (~621,678 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500])
+import re
+lines=context.split('\n')
+print(len(lines))
+print([l for l in lines if '50824' in l][:10])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500])
+lines=context.split('\n')
+print(len(lines))
+print([l for l in lines if '50824' in l][:10])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 04, 2023 || User: 24937 || Instance: What are the most common causes of death in the U.S. ?
+Date: Apr 13, 2022 || User: 24926 || Instance: What 19th-century painter died in the Marquesas Islands ?
+Date: Dec 24, 2022 || User: 79525 || Instance: What does NASDAQ stand for ?
+Date: Mar 22, 2022 || User: 44771 || Instance: How many tenths of the Earth 's surface lie under water ?
+Date: Jun 02, 2025 || User: 40066 || Instance: Who famously rode to warn the people of Massachusetts that the British were coming ?
+Date: Jun 18, 2022 || User: 33915 || Instance: Who was the first Taiwanese President ?
+Date: Feb 11, 2025 || User: 60605 || Instance: How much time does the blinking of an eye take ?
+Date: Mar 17, 2025 || User: 93915 || Instance: How long is human gestation ?
+Date: Nov 18, 2022 || User: 28441 || Instance: Who is Karenna Gore , Al Gore 's oldest daughter , married to ?
+Date: Jun 23, 2023 || User: 78131 || Instance: How much do drugs to treat tuberculosis cost ?
+Date: May 25, 2023 || User: 5
+25540
+['Date: Jul 07, 2022 || User: 50824 || Instance: What does the abbreviation AIDS stand for ?', 'Date: Dec 31, 2022 || User: 50824 || Instance: How many James Bond novels are there ?', 'Date: Apr 09, 2023 || User: 50824 || Instance: How many people live in the Falklands ?', 'Date: Dec 26, 2022 || User: 50824 || Instance: How many casinos are in Atlantic City , NJ ?', 'Date: Aug 14, 2023 || User: 50824 || Instance: What does Warner Bros. call a flightless cuckoo ?', 'Date: Jan 28, 2023 || User: 50824 || Instance: What book is subtitled The Preservation of Favoured Races in the Struggle for Life ?', 'Date: Sep 05, 2024 || User: 50824 || Instance: What is the acronym for the National Bureau of Investigation ?', 'Date: Oct 27, 2022 || User: 50824 || Instance: In what year was the Wall built ?', 'Date: Jun 12, 2023 || User: 50824 || Instance: Where does Buzz Aldrin want to build a permanent , manned space station ?', 'Date: Feb 21, 2025 || User: 50824 || Instance: How old was Stevie Wonder when he signed with Motown Records ?']
+
+
+--- turn 2 ---
+```python
+sub=[l.split('Instance: ',1)[1] for l in lines if '|| User: 50824 ||' in l]
+print(len(sub))
+labs=['human being','entity','abbreviation','location','description and abstract concept','numeric value']
+prompts=[]
+for i in range(0,len(sub),40):
+    chunk=sub[i:i+40]
+    prompts.append("Classify each question by its answer type into one of: "+", ".join(labs)+".\nReturn one label per line, in order, numbered, nothing else.\n"+"\n".join(f"{j+1}. {q}" for j,q in enumerate(chunk)))
+outs=llm_query_batched(prompts)
+from collections import Counter
+c=Counter()
+for o in outs:
+    for ln in o.split('\n'):
+        for lab in labs:
+            if lab in ln.lower():
+                c[lab]+=1;break
+print(c)
+```
+OUTPUT:
+16
+Counter({'numeric value': 5, 'abbreviation': 4, 'entity': 3, 'location': 3, 'description and abstract concept': 1})
+
+
+--- turn 3 ---
+```python
+FINAL("Label: numeric value")
+```
+FINAL: Label: numeric value

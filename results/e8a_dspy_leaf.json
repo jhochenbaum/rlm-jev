@@ -1,0 +1,18 @@
+{
+ "dspy_native": {
+  "acc": 0.925,
+  "ece": 0.0293,
+  "tokens": 205621,
+  "tok_per_item": 514.1,
+  "usd": 0.00864,
+  "wall_s": 6.0
+ },
+ "inline_b200": {
+  "acc": 0.945,
+  "ece": 0.0205,
+  "tokens": 91353,
+  "tok_per_item": 228.4,
+  "usd": 0.00384,
+  "wall_s": 0.8
+ }
+}

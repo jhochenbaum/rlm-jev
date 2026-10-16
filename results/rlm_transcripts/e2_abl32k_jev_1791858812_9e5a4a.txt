@@ -1,0 +1,245 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 76,803 characters (~19,200 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+print(context[:1200])
+print(lines[-5:])
+```
+OUTPUT:
+796
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 29, 2022 || User: 44436 || Instance: What does IOC stand for ?
+Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?
+Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?
+Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?
+Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?
+Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .
+Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?
+Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM s
+["Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+data = [l for l in lines if l.startswith("Date:") and "Instance:" in l]
+print(len(data))
+qs = [l.split("Instance:",1)[1].strip() for l in data]
+labels = {
+ 'location': 'answer is a place: country, city, mountain, river, address, etc.',
+ 'numeric value': 'answer is a number: count, date, year, money, distance, size, speed, percentage, etc.',
+ 'description and abstract concept': 'answer is a description, definition, explanation, reason, manner, or abstract concept',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'human being': 'answer is a person, group of people, or organization of people',
+ 'entity': 'answer is a concrete thing or entity: animal, food, body part, color, product, creature, sport, substance, event, language, work, instrument, vehicle, term, etc.',
+}
+res = jev_classify(qs, labels)
+from collections import Counter
+preds = [max(r, key=r.get) for r in res]
+print(Counter(preds))
+```
+OUTPUT:
+787
+Counter({'abbreviation': 159, 'numeric value': 155, 'description and abstract concept': 141, 'location': 117, 'human being': 116, 'entity': 99})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(1)
+for lab in ['abbreviation','entity']:
+    idx=[i for i,p in enumerate(preds) if p==lab]
+    print("==",lab)
+    for i in random.sample(idx,25):
+        print(round(res[i][lab],2), qs[i])
+```
+OUTPUT:
+== abbreviation
+0.94 What is p.m. an abbreviation for , as in 5 p.m. ?
+0.87 What does BTU mean ?
+0.96 What does R.E.M. stand for , as in the rock group R.E.M. ?
+0.97 What does BMW stand for ?
+0.98 What does NASDAQ stand for ?
+0.91 What does the word LASER mean ?
+0.97 What is the abbreviated form of the National Bureau of Investigation ?
+0.96 What does snafu stand for ?
+0.95 In a computer , what does SCSI mean ?
+0.97 What is the abbreviation of the International Olympic Committee ?
+0.95 What does `` B.Y.O.B. '' mean ?
+0.96 What does INRI stand for when used on Jesus ' cross ?
+0.96 What is IOC an abbreviation of ?
+0.98 What is the abbreviated expression for the National Bureau of Investigation ?
+0.99 What does IQ stand for ?
+0.98 What does IOC stand for ?
+0.96 CNN is the abbreviation for what ?
+0.98 What is the acronym for the National Bureau of Investigation ?
+0.97 What does S.O.S. stand for ?
+0.99 What is the abbreviated form of the National Bureau of Investigation ?
+0.67 What is HDLC ?
+0.96 What is the acronym for the rating system for air conditioner efficiency ?
+0.94 CPR is the abbreviation for what ?
+0.98 What does NAFTA stand for ?
+0.97 What does IBM stand for ?
+== entity
+0.97 What Lewis Carroll book introduced Humpty Dumpty to the world ?
+0.98 What 's the second-biggest-selling magazine in America ?
+0.67 What 's the most common street name in America ?
+0.69 What was the nickname of German flying ace Manfred von Richthofen ?
+0.99 What was the name of the sitcom that Alyssa Milano starred in with Tony Danza ?
+0.55 What are Bellworts ?
+0.51 What was the rallying cry of the early American revolutionaries ?
+0.97 What non-alcoholic syrup is made from pomegranate juice ?
+0.97 What Marx Brothers movie centers on a stolen painting ?
+0.98 What Broadway musical featured the song , `` If I were a rich man ? ''
+0.52 What is hydrogen ?
+0.89 What is the name of the chronic neurological autoimmune disease which attacks the protein sheath that surrounds nerve cells causing a gradual loss of movement in the body ?
+0.92 What color is an Arctic fox in winter ?
+0.48 What is the occupation of Nicholas Cage ?
+0.97 What plant is rum made from ?
+0.88 What constellation contains the twins Castor and Pollux ?
+0.83 What product does `` Mrs. Olsen '' promote ?
+0.74 What was the V-8 Juice slogan : `` the tastebud '' ?
+0.96 What song put James Taylor in the limelight ?
+0.94 What card game has variations called Canfield , Klondike and Spider ?
+0.69 What kind of sports team is the Buffalo Sabres ?
+0.97 What anesthetic did Queen Victoria allow to be used for the birth of her seventh child , in 1853 ?
+0.75 Name an art gallery in New York .
+0.99 In what war was the first submarine used ?
+0.85 What do humans catch zoonose diseases from ?
+
+
+--- turn 3 ---
+```python
+uniq = list(dict.fromkeys(qs))
+print(len(uniq))
+border = [(res[i]['entity'], preds[i], qs[i]) for i in range(len(qs)) if preds[i]!='entity' and res[i]['entity']>0.2]
+print(len(border))
+random.seed(2)
+for p,l,q in random.sample(border, min(40,len(border))):
+    print(round(p,2), l, '|', q)
+```
+OUTPUT:
+693
+45
+0.39 location | Where is your corpus callosum ?
+0.33 location | What are the world 's three largest oceans , in order of size ?
+0.34 description and abstract concept | Where can I find up-to-date coastal ocean surface temperature information , preferably along North America and the Caribbean ?
+0.23 location | What airport is on the Piccadilly subway line ?
+0.37 human being | What first name was Nipsy Russell given at birth ?
+0.21 human being | What fictional character is known as the `` melancholy Dane '' ?
+0.43 location | Where does the U.S. get most of its energy ?
+0.25 description and abstract concept | What is DEET ?
+0.43 location | What planet would you visit to see Bebrenia , Arcadia , and Amazonis ?
+0.21 description and abstract concept | What does Tiffany mean ?
+0.37 human being | What is the last name of Lucy and Linus from the Peanut 's comic strip ?
+0.25 description and abstract concept | What are amphibians ?
+0.26 description and abstract concept | How do I find a snowboarding website ?
+0.22 description and abstract concept | What 's the origin of the word ` news ' ?
+0.41 human being | Who makes the `` Die Hard '' car battery ?
+0.21 description and abstract concept | What is porphyria ?
+0.31 human being | Who markets Spaghetti-o 's ?
+0.4 human being | Who manufactures the software , `` PhotoShop '' ?
+0.23 numeric value | How many URL extensions are there ? and what are they ?
+0.22 description and abstract concept | What is fellatio ?
+0.42 human being | What does the policeman become in the Canadian edition of Monopoly ?
+0.34 description and abstract concept | What is the origin of the word assassinate ?
+0.32 location | What are the largest deserts in the world ?
+0.43 description and abstract concept | What 's the Olympic motto ?
+0.25 location | What cathedral was Thomas Becket murdered in ?
+0.38 description and abstract concept | How do you say I love you in Spanish ?
+0.27 human being | What New Orleans D.A. claimed : `` My staff and I solved the assassination weeks ago '' ?
+0.34 location | What is the name of the planet that the Ewoks live on ?
+0.33 location | Where can I get mailing lists ?
+0.24 human being | Who are cartoondom 's Super Six ?
+0.3 description and abstract concept | What is the origin of the word `` tampon '' ?
+0.22 location | Where in a tree does photosynthesis occur ?
+0.33 human being | What dumb-but-loveable character did Maurice Gosfield play on The Phil Silvers Show ?
+0.32 description and abstract concept | What is a Cartesian Diver ?
+0.35 location | Where are the Haversian canals ?
+0.44 description and abstract concept | What was the proper Laugh-In respones to : `` Say goodnight , Dick '' ?
+0.37 human being | What 's the middle name of movie producer Joseph E. Levine ?
+0.24 description and abstract concept | What is the meaning of caliente , in English , ?
+0.44 description and abstract concept | What is Candlemas Day ?
+0.25 description and abstract concept | In Waugh 's `` A Handful of Dust , '' what does the mad old man force the hero to do every afternoon ?
+
+
+--- turn 4 ---
+```python
+labels2 = {
+ 'location': 'asks for a place: city, country, state, mountain, river, planet, address, website location',
+ 'numeric value': 'asks for a number: count, date, year, money, distance, weight, speed, percentage, period of time, code',
+ 'description and abstract concept': 'asks for a definition, description, explanation, manner (how), reason (why), meaning, origin of a word, or an expression/ motto',
+ 'abbreviation': 'asks for an abbreviation or what an abbreviation stands for',
+ 'human being': 'asks for a person (who), a group of people, an organization, or a title/name of an individual',
+ 'entity': 'asks for a thing: animal, plant, food, drink, body part, color, creature, sport, substance, disease, symbol, event, language, book, movie, song, product, vehicle, instrument, letter, word, religion, or other object',
+}
+res2 = jev_classify(qs, labels2, instruction="What type of answer does this question ask for?")
+preds2 = [max(r, key=r.get) for r in res2]
+print(Counter(preds2))
+agree = sum(a==b for a,b in zip(preds,preds2)); print(agree)
+# entity-flip examples
+random.seed(3)
+d = [(qs[i],preds[i],preds2[i]) for i in range(len(qs)) if (preds[i]=='entity')!=(preds2[i]=='entity')]
+print(len(d))
+for x in random.sample(d,min(40,len(d))): print(x)
+```
+OUTPUT:
+Counter({'abbreviation': 165, 'numeric value': 154, 'description and abstract concept': 144, 'human being': 120, 'location': 114, 'entity': 90})
+753
+25
+("What are the world 's three largest oceans , in order of size ?", 'location', 'entity')
+('What was the rallying cry of the early American revolutionaries ?', 'entity', 'description and abstract concept')
+('What are the largest deserts in the world ?', 'location', 'entity')
+('What is the largest natural lake in Pennsylvania ?', 'location', 'entity')
+('What is Boston Kreme ?', 'entity', 'description and abstract concept')
+("Where is there information on the novel `` El Cid '' ?", 'entity', 'location')
+('What man-made waterways is 1.76 miles long ?', 'location', 'entity')
+('What are Bellworts ?', 'entity', 'description and abstract concept')
+('Where can I find the names of all the 15 Pokemon ?', 'entity', 'location')
+("What was Eduard Shevardnadze 's job in the Soviet Union ?", 'entity', 'human being')
+("What was Al Capone 's nickname ?", 'entity', 'human being')
+("What 's new in the postal world in 1999 ?", 'description and abstract concept', 'entity')
+('What are vermicilli , rigati , zitoni , and tubetti ?', 'entity', 'description and abstract concept')
+('What cathedral was Thomas Becket murdered in ?', 'location', 'entity')
+('What title did Shevardnadze have during the Soviet era ?', 'entity', 'human being')
+('Where does the U.S. get most of its energy ?', 'location', 'entity')
+("What 's the Red Planet ?", 'entity', 'location')
+('What are the four largest mountain ranges in the continental United States ?', 'location', 'entity')
+('What is hydrogen ?', 'entity', 'description and abstract concept')
+('What is a stratocaster ?', 'entity', 'description and abstract concept')
+("What was the V-8 Juice slogan : `` the tastebud '' ?", 'entity', 'description and abstract concept')
+('What is the website for the USA journal ?', 'entity', 'location')
+('What does Larry King do for a living ?', 'entity', 'description and abstract concept')
+('What was the nickname of German flying ace Manfred von Richthofen ?', 'entity', 'human being')
+('What is molybdenum ?', 'entity', 'description and abstract concept')
+
+
+--- turn 5 ---
+```python
+ens = []
+for a, b in zip(res, res2):
+    ens.append({k: a[k] + b[k] for k in a})
+preds3 = [max(r, key=r.get) for r in ens]
+c3 = Counter(preds3)
+print(c3)
+FINAL_n = c3['entity']
+print(FINAL_n)
+```
+OUTPUT:
+Counter({'abbreviation': 162, 'numeric value': 154, 'description and abstract concept': 143, 'human being': 119, 'location': 118, 'entity': 91})
+91
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: 91")
+```
+FINAL: Answer: 91

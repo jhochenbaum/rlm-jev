@@ -1,0 +1,142 @@
+Query: In the above data, is label 'numeric value' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: numeric value is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500]); print(context[-500:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 1 ---
+```python
+import re
+lines = context.split("\n")
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money amount, duration, size, or other numeric value',
+ 'entity': 'answer is a thing/entity such as an animal, product, food, event, object, language, etc.',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+ 'human being': 'answer is a person or group of people',
+ 'location': 'answer is a place such as a country, city, mountain, or other location',
+}
+res = jev_classify(uq, labels, "What category describes the answer to this question?")
+from collections import Counter
+d = dict(zip(uq, res))
+c = Counter()
+for q in qs:
+    p = d[q]; c[max(p, key=p.get)] += 1
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 4802, 'abbreviation': 4744, 'description and abstract concept': 4688, 'entity': 4067, 'location': 3727, 'numeric value': 3503})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+abbr = [q for q in uq if max(d[q], key=d[q].get)=='abbreviation']
+print(len(abbr))
+for q in random.sample(abbr, 25): print(q, round(d[q]['abbreviation'],2))
+num = [q for q in uq if max(d[q], key=d[q].get)=='numeric value']
+print(len(num))
+for q in random.sample(num, 10): print(q)
+```
+OUTPUT:
+74
+What is BPH ? 0.87
+What 's the abbreviation for limited partnership ? 1.0
+What does S.O.S. stand for ? 0.97
+What does U.S.S.R. stand for ? 0.96
+What is LMDS ? 0.73
+What does the word LASER mean ? 0.98
+What does CNN stand for ? 0.95
+What is DSL ? 0.86
+What 's the abbreviation for trinitrotoluene ? 1.0
+What is the abbreviated expression for the National Bureau of Investigation ? 1.0
+What is the abbreviated term used for the National Bureau of Investigation ? 1.0
+What does MSG stand for ? 0.98
+What is HDLC ? 0.69
+What is IOC an abbreviation of ? 0.88
+What does IOC stand for ? 0.98
+What is SVHS ? 0.93
+What is the abbreviation of the International Olympic Committee ? 0.99
+What does pH stand for ? 0.98
+What does G.M.T. stand for ? 0.99
+What does IBM stand for ? 0.95
+What does LOL mean ? 0.91
+What does the T.S. stand for in T.S. Eliot 's name ? 0.97
+What does e.g. stand for ? 0.97
+What is DEET ? 0.51
+What do the letters D.C. stand for in Washington , D.C. ? 0.99
+655
+How long does it take sunlight to reach Earth ?
+How many feet high is the hurdle in front of a runner 's steeplechase water jump ?
+What year did Germany sign its nonaggression pact with the Soviet Union ?
+What does an average daycare provider get paid in New England ?
+What amount of money did the Philippine ex-dictator Marcos steal from the treasury ?
+How many electoral votes does it take to win presidency ?
+How many stars are there on the Soviet Union 's flag ?
+How many major Nazi leaders went on trial after the war at Nuremberg ?
+What percentage of American men are alcoholic ?
+How many muscles does an oyster have ?
+
+
+--- turn 3 ---
+```python
+yn_num = jev_yesno(uq, "Is the answer to this question a numeric value (a number, count, date, amount, duration, or size)?")
+yn_abb = jev_yesno(uq, "Is the answer to this question an abbreviation or the expansion of an abbreviation?")
+yn_num = dict(zip(uq, yn_num)); yn_abb = dict(zip(uq, yn_abb))
+cn = sum(1 for q in qs if yn_num[q] > 0.5)
+ca = sum(1 for q in qs if yn_abb[q] > 0.5)
+print(cn, ca)
+# heuristic check
+hn = sum(1 for q in qs if re.match(r"(How (many|much|long|far|old|tall|high|big|fast|large)|What year|What percentage|When )", q))
+ha = sum(1 for q in qs if re.search(r"(stand for|abbreviat|acronym|short for)", q, re.I))
+print(hn, ha)
+# duplication of abbreviations
+cc = Counter(q for q in qs if max(d[q], key=d[q].get)=='abbreviation')
+print(cc.most_common(5))
+```
+OUTPUT:
+3600 5431
+2540 3860
+[('What is AFS ?', 65), ('What does BMW stand for ?', 65), ('What does BTU mean ?', 65), ('What is HDLC ?', 65), ('What does G.M.T. stand for ?', 65)]
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: numeric value is less common than abbreviation")
+```
+FINAL: Answer: numeric value is less common than abbreviation

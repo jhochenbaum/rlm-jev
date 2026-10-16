@@ -1,0 +1,246 @@
+Query: In the above data, is label 'entity' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: entity is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+....
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+25540
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r'^Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m:
+        qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money, measurement, duration, etc.',
+ 'entity': 'answer is a thing/entity such as an animal, food, product, color, body part, event, sport, creation, etc.',
+ 'abbreviation': 'answer is an abbreviation or acronym, or the expansion of one',
+ 'human being': 'answer is a person, group of people, or an individual',
+ 'location': 'answer is a place such as a city, country, state, mountain, or other location',
+}
+res = jev_classify(uq, labels)
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 5112, 'abbreviation': 4878, 'description and abstract concept': 4578, 'entity': 3743, 'location': 3723, 'numeric value': 3497})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(0)
+abbr = [q for q in uq if pred[q]=='abbreviation']
+print(len(abbr), len(uq))
+for q in random.sample(abbr, 25):
+    print(q)
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 7
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 4 ---
+```python
+import random
+random.seed(0)
+abbr = [q for q in uq if pred[q]=='abbreviation']
+print(len(abbr), len(uq))
+for q in random.sample(abbr, 25):
+    print(q)
+```
+OUTPUT:
+77 4151
+What does SHIELD stand for ?
+What does BTU mean ?
+What does S.O.S. stand for ?
+What does NAFTA stand for ?
+What does the word LASER mean ?
+What is the correct way to abbreviate cc. at the bottom of a business letter ?
+What is SVHS ?
+What does the abbreviation IOC stand for ?
+What does SIDS stand for ?
+What is the literal meaning of `` D-DAY '' ?
+What does CPR stand for ?
+What 's the abbreviation for trinitrotoluene ?
+What does IBM stand for ?
+What does LOL mean ?
+What is HDLC ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+What is the abbreviation of the International Olympic Committee ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does G.M.T. stand for ?
+What does the channel ESPN stand for ?
+What does MSG stand for ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+What does e.g. stand for ?
+What is DEET ?
+What do the letters D.C. stand for in Washington , D.C. ?
+
+
+--- turn 5 ---
+```python
+qc = Counter(qs)
+print("abbr top:", [(q, qc[q]) for q in sorted(abbr, key=lambda x: -qc[x])[:10]])
+ent = [q for q in uq if pred[q]=='entity']
+print(len(ent), sum(qc[q] for q in ent))
+print("entity top:", [(q, qc[q]) for q in sorted(ent, key=lambda x: -qc[x])[:10]])
+random.seed(1)
+for q in random.sample(ent, 25):
+    print(qc[q], q)
+# distribution of dup counts
+print(Counter(qc.values()).most_common(10))
+```
+OUTPUT:
+abbr top: [('What is the abbreviation of the National Bureau of Investigation ?', 65), ("What does INRI stand for when used on Jesus ' cross ?", 65), ("What does ` PSI ' stand for ?", 65), ('What does S.O.S. stand for ?', 65), ('What is HDLC ?', 65), ('What is the acronym for the National Bureau of Investigation ?', 65), ('In a computer , what does SCSI mean ?', 65), ('When reading classified ads , what does EENTY : other stand for ?', 65), ('What does the channel ESPN stand for ?', 65), ('What does BMW stand for ?', 65)]
+802 3743
+entity top: [('What is the largest shopping mall in the world ?', 6), ("What 's the name of a hotel in Indianapolis ?", 6), ('What doctor is synonymous with footwear and foot care ?', 6), ('What is the US Federal Government website for Standard Industrial Classification codes , SIC , ?', 6), ("Where can I find book reviews of `` Turbulent Souls '' ?", 6), ('What video game hero do some of his fans call Chomper ?', 6), ('What Las Vegas hotel burned in November , 1980 , with the loss of 84 lives ?', 6), ('What radio , TV and movie character did Jackie Gleason and William Bendix play ?', 6), ('In what high-risk business venture did Jimmy the Greek bet and lose ?', 6), ('What government department did The Untouchables work for ?', 6)]
+4 What is the name of the second space shuttle ?
+4 What soft drink not only has its own video game , but was featured in its own Marvel comic book ?
+5 What type is a snail ?
+5 What is the only vegetable that starts with `` z '' ?
+5 What game do Steve McQueen and Edward G. Robinson play in The Cincinnati Kid ?
+5 What delicacy is known indelicately as pickled roe ?
+5 What is the only modern language that capitalizes its singular first-person pronoun ?
+4 What color is `` ash '' ?
+3 Name the men 's cologne that is associated with the sea .
+4 What is the name of the disease that actress Hunter Tylo 's baby girl has ?
+5 What war did Johnny Reb and Billy Yank fight ?
+6 What was the infamous pseudonym of Peter Sutcliffe ?
+4 What was the sequel to The Moon 's Balloon ?
+5 What 1953 film won Frank Sinatra a best supporting actor Oscar ?
+5 What was Nine Tailors , the television show from 1974 , about ?
+5 What beer advertised that it had `` three rings '' ?
+4 What football bowl game 's first queen was Hallie Woods ?
+4 What is the best brand for a laptop computer ?
+5 What other name were the `` Little Rascals '' known as ?
+4 What kind of fish is a coney ?
+5 What do river otters eat ?
+5 Name the operating system that runs on IBM-compatible machines .
+5 What is Dudley Do-Right 's horse 's name ?
+5 What 's the highest-ranking suit in bridge ?
+5 What was Jimmy Durante 's theme song ?
+[(5, 1927), (6, 1156), (4, 826), (3, 140), (65, 35), (64, 29), (2, 20), (63, 10), (62, 7), (1, 1)]
+
+
+--- turn 6 ---
+```python
+heavy = [q for q in uq if qc[q] >= 20]
+print(len(heavy), sum(qc[q] for q in heavy))
+print(Counter(pred[q] for q in heavy))
+for q in heavy:
+    if pred[q] != 'abbreviation':
+        print(qc[q], pred[q], q)
+# soft counts
+import numpy as np
+soft = Counter()
+for q, r in zip(uq, res):
+    for k, v in r.items():
+        soft[k] += v * qc[q]
+print({k: round(v) for k, v in soft.items()})
+# abbreviation-flavoured questions among light ones
+light_abbr = [q for q in uq if qc[q] < 20 and pred[q]=='abbreviation']
+print(len(light_abbr), sum(qc[q] for q in light_abbr))
+```
+OUTPUT:
+81 5195
+Counter({'abbreviation': 76, 'description and abstract concept': 5})
+65 description and abstract concept What does the E stand for in the equation E=mc2 ?
+65 description and abstract concept What is HTML ?
+64 description and abstract concept What does the `` c '' stand for in the equation E=mc2 ?
+64 description and abstract concept What does NN O `` mean when used as a prefix in Irish surnames ?
+64 description and abstract concept What does JESSICA mean ?
+{'description and abstract concept': 4966, 'numeric value': 3276, 'entity': 4165, 'abbreviation': 4559, 'human being': 5103, 'location': 3458}
+1 5
+
+
+--- turn 7 ---
+```python
+light = [q for q in uq if qc[q] < 20]
+yn = jev_yesno(light, "Is the answer to this question a thing or entity (e.g. an animal, food, product, color, body part, event, sport, creative work, vehicle, substance, language, instrument), rather than a person, place, number, abbreviation, or a description/explanation?")
+tot_w = sum(qc[q] for q in light)
+soft_ent = sum(p*qc[q] for p,q in zip(yn,light))
+hard_ent = sum(qc[q] for p,q in zip(yn,light) if p>0.5)
+print(len(light), tot_w, soft_ent, hard_ent)
+print(sum(qc[q] for q in heavy if pred[q]=='abbreviation'))
+# distribution of predicted among light, weighted
+print(Counter({k: sum(qc[q] for q in light if pred[q]==k) for k in labels}))
+```
+OUTPUT:
+4070 20336 5357.199999999956 4231
+4873
+Counter({'human being': 5112, 'description and abstract concept': 4256, 'entity': 3743, 'location': 3723, 'numeric value': 3497, 'abbreviation': 5})
+
+
+--- turn 8 ---
+```python
+FINAL("Answer: entity is less common than abbreviation")
+```
+FINAL: Answer: entity is less common than abbreviation

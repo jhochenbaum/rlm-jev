@@ -1,0 +1,104 @@
+Query: In the above data, how many data points should be classified as label 'location'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500]); lines=context.split('\n'); print(len(lines)); print(lines[-3:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+lines = context.split('\n')
+print(len(lines))
+print(context[:1500])
+print(lines[-3:])
+```
+OUTPUT:
+3191
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+['You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 2 ---
+```python
+import re
+inst=[]
+for l in lines:
+    m=re.match(r'Date: .*? \|\| User: \d+ \|\| Instance: (.*)',l)
+    if m: inst.append(m.group(1))
+print(len(inst))
+cats=['description and abstract concept','entity','human being','numeric value','location','abbreviation']
+def mk(chunk,start):
+    s="Classify each question by the type of its answer into one of: description and abstract concept, entity, human being, numeric value, location, abbreviation (TREC question classes). Output one line per question formatted 'N: label' using the same numbering, nothing else.\n\n"
+    return s+"\n".join(f"{start+i}: {q}" for i,q in enumerate(chunk))
+size=100
+chunks=[(i,inst[i:i+size]) for i in range(0,len(inst),size)]
+prompts=[mk(c,i) for i,c in chunks]
+res=[]
+for b in range(0,len(prompts),8):
+    res+=llm_query_batched(prompts[b:b+8])
+labels={}
+for r in res:
+    for m in re.finditer(r'(\d+):\s*(description and abstract concept|entity|human being|numeric value|location|abbreviation)',r):
+        labels[int(m.group(1))]=m.group(2)
+print(len(labels))
+from collections import Counter
+print(Counter(labels.values()))
+```
+OUTPUT:
+3182
+2202
+Counter({'entity': 618, 'numeric value': 582, 'location': 274, 'abbreviation': 262, 'human being': 259, 'description and abstract concept': 207})
+
+
+--- turn 3 ---
+```python
+def run(missing):
+    global labels
+    for attempt in range(3):
+        missing=[i for i in range(len(inst)) if i not in labels]
+        if not missing: break
+        groups=[missing[i:i+50] for i in range(0,len(missing),50)]
+        prompts=[]
+        for g in groups:
+            s="Classify each question by the type of its answer into one of: description and abstract concept, entity, human being, numeric value, location, abbreviation (TREC question classes). Output one line per question formatted 'N: label' using the same numbering, nothing else.\n\n"
+            prompts.append(s+"\n".join(f"{i}: {inst[i]}" for i in g))
+        for b in range(0,len(prompts),8):
+            out=llm_query_batched(prompts[b:b+8])
+            for r in out:
+                for m in re.finditer(r'(\d+):\s*(description and abstract concept|entity|human being|numeric value|location|abbreviation)',r):
+                    labels[int(m.group(1))]=m.group(2)
+        print(attempt,len(labels))
+run(None)
+print(Counter(labels.values()), len(labels))
+```
+OUTPUT:
+0 2920
+1 3134
+2 3182
+Counter({'numeric value': 966, 'entity': 782, 'human being': 438, 'description and abstract concept': 353, 'location': 335, 'abbreviation': 308}) 3182
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: 335")
+```
+FINAL: Answer: 335

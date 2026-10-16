@@ -1,0 +1,46 @@
+{
+ "n": 500,
+ "per_question": {
+  "acc": 0.934,
+  "ece": 0.0155,
+  "tokens_per_item": 227.6,
+  "usd": 0.00478,
+  "wall_s": 0.96
+ },
+ "in_state": {
+  "acc": 0.928,
+  "ece": 0.0079,
+  "tokens_per_item": 89.1,
+  "usd": 0.00187,
+  "wall_s": 0.37
+ },
+ "names_only": {
+  "acc": 0.802,
+  "ece": 0.0962,
+  "tokens_per_item": 88.6,
+  "usd": 0.00186,
+  "wall_s": 0.45
+ },
+ "full_pool_per_question": {
+  "n": 4151,
+  "single": {
+   "acc": 0.9366,
+   "ece": 0.0146
+  },
+  "both_orders": {
+   "acc": 0.9439,
+   "ece": 0.0125
+  }
+ },
+ "full_pool_in_state": {
+  "n": 4151,
+  "single": {
+   "acc": 0.9239,
+   "ece": 0.0131
+  },
+  "both_orders": {
+   "acc": 0.9282,
+   "ece": 0.0124
+  }
+ }
+}

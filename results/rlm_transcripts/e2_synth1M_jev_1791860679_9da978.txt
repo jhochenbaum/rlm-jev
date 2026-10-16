@@ -1,0 +1,159 @@
+Query: In the above data, is label 'abbreviation' more common, less common, or the same frequency as label 'location'? Give your final answer in the form 'Answer: abbreviation is [X] location', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+for l in lines[:12]: print(repr(l[:200]))
+print([repr(l[:200]) for l in lines[-3:]])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+25540
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric valu"
+''
+'You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answ'
+''
+'Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?'
+"Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?"
+'Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?'
+'Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?'
+'Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?'
+'Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?'
+'Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?'
+'Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?'
+["'You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answ'", "''", "''"]
+
+
+--- turn 1 ---
+```python
+import re
+qs = [l.split("Instance: ",1)[1] for l in lines if "|| Instance: " in l]
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money, size, duration, or other numeric value',
+ 'entity': 'answer is a thing: animal, food, product, creation, body part, event, color, sport, etc.',
+ 'abbreviation': 'answer is an abbreviation or acronym, or the expansion of one',
+ 'human being': 'answer is a person, group of people, or organization/title of a person',
+ 'location': 'answer is a place: city, country, state, mountain, address, or other location',
+}
+res = jev_classify(uq, labels)
+from collections import Counter
+pred = dict(zip(uq, [max(r, key=r.get) for r in res]))
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 5436, 'abbreviation': 4878, 'description and abstract concept': 4522, 'location': 3727, 'numeric value': 3491, 'entity': 3477})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+abbr = [q for q in uq if pred[q]=='abbreviation']
+print(len(abbr), len(uq))
+for q in random.sample(abbr, 25): print(q, round(res[uq.index(q)]['abbreviation'],2))
+```
+OUTPUT:
+77 4151
+What does SHIELD stand for ? 0.97
+What does BTU mean ? 0.88
+What does S.O.S. stand for ? 0.95
+What does NAFTA stand for ? 0.96
+What does the word LASER mean ? 0.9
+What is the correct way to abbreviate cc. at the bottom of a business letter ? 0.62
+What is SVHS ? 0.89
+What does the abbreviation IOC stand for ? 0.96
+What does SIDS stand for ? 0.96
+What is the literal meaning of `` D-DAY '' ? 0.58
+What does CPR stand for ? 0.96
+What 's the abbreviation for trinitrotoluene ? 0.99
+What does IBM stand for ? 0.95
+What does LOL mean ? 0.88
+What is HDLC ? 0.64
+What is the abbreviated expression for the National Bureau of Investigation ? 0.98
+What is the abbreviation of the International Olympic Committee ? 0.98
+What is the abbreviated form of the National Bureau of Investigation ? 0.99
+What does G.M.T. stand for ? 0.95
+What does the channel ESPN stand for ? 0.95
+What does MSG stand for ? 0.97
+What does the T.S. stand for in T.S. Eliot 's name ? 0.93
+What does e.g. stand for ? 0.84
+What is DEET ? 0.45
+What do the letters D.C. stand for in Washington , D.C. ? 0.93
+
+
+--- turn 3 ---
+```python
+qc = Counter(qs)
+# soft counts weighted by multiplicity
+soft = Counter()
+for q, r in zip(uq, res):
+    for k, v in r.items():
+        soft[k] += v * qc[q]
+print({k: round(v) for k, v in soft.items()})
+
+# top duplicated questions by predicted label
+for lab in ['abbreviation', 'location']:
+    items = sorted([q for q in uq if pred[q] == lab], key=lambda q: -qc[q])[:10]
+    print(lab)
+    for q in items: print('  ', qc[q], q, round(res[uq.index(q)][lab], 2))
+
+# low-confidence abbreviation predictions weighted by count
+low = [(qc[q], q, round(res[uq.index(q)]['abbreviation'], 2)) for q in abbr if res[uq.index(q)]['abbreviation'] < 0.7]
+print(sorted(low, reverse=True)[:15])
+```
+OUTPUT:
+{'description and abstract concept': 5031, 'numeric value': 3258, 'entity': 3786, 'abbreviation': 4553, 'human being': 5404, 'location': 3495}
+abbreviation
+   65 What is the abbreviation of the National Bureau of Investigation ? 0.99
+   65 What does INRI stand for when used on Jesus ' cross ? 0.95
+   65 What does ` PSI ' stand for ? 0.93
+   65 What does S.O.S. stand for ? 0.95
+   65 What is HDLC ? 0.64
+   65 What is the acronym for the National Bureau of Investigation ? 0.99
+   65 In a computer , what does SCSI mean ? 0.94
+   65 When reading classified ads , what does EENTY : other stand for ? 0.63
+   65 What does the channel ESPN stand for ? 0.95
+   65 What does BMW stand for ? 0.96
+location
+   6 Where did the Japanese Imperial Forces surrender to end WWII ? 0.99
+   6 Where is the location of the Orange Bowl ? 0.87
+   6 Where is the Kentucky Horse Park ? 0.91
+   6 Where is the Isle of Man ? 0.9
+   6 What 's the capital of Monaco ? 0.97
+   6 What country contains the westernmost point in South America ? 0.96
+   6 What was known as the Spice Island ? 0.94
+   6 What river flows through Vienna , Budapest and Belgrade ? 0.64
+   6 What city does Orly Airport serve ? 0.96
+   6 Where is Windsor Castle ? 0.83
+[(65, 'When reading classified ads , what does EENTY : other stand for ?', 0.63), (65, 'What is HDLC ?', 0.64), (65, 'What is DTMF ?', 0.66), (65, 'What is DEET ?', 0.45), (64, 'What is the correct way to abbreviate cc. at the bottom of a business letter ?', 0.62), (64, 'What is RAM in the computer ?', 0.5), (5, "What is the literal meaning of `` D-DAY '' ?", 0.58)]
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: abbreviation is more common than location")
+```
+FINAL: Answer: abbreviation is more common than location

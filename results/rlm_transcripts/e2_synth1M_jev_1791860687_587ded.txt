@@ -1,0 +1,260 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-5:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+25540
+["Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m:
+        qs.append(m.group(1))
+print(len(qs))
+uniq = list(dict.fromkeys(qs))
+print(len(uniq))
+
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, explanation, reason, manner, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money amount, measurement, duration, or other numeric value',
+ 'entity': 'answer is a thing/entity such as an animal, body part, color, creation, food, event, language, product, sport, substance, symbol, technique, vehicle, word, or other non-person object',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'human being': 'answer is a person, a group of people, or an individual described by name or title',
+ 'location': 'answer is a place such as a city, country, state, mountain, or other location',
+}
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+from collections import Counter
+cnt = Counter(pred[q] for q in qs)
+print(cnt)
+```
+OUTPUT:
+25531
+4151
+Counter({'human being': 4972, 'abbreviation': 4808, 'description and abstract concept': 4288, 'entity': 4285, 'location': 3678, 'numeric value': 3500})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+for lab in labels:
+    qs_lab = [q for q in uniq if pred[q]==lab]
+    print("==", lab, len(qs_lab))
+    for q in random.sample(qs_lab, 8):
+        print("  ", q)
+```
+OUTPUT:
+== description and abstract concept 865
+   What is the meaning of the name Kathryn ?
+   Why shouldn 't you remove a bee stinger with tweezers ?
+   Why were the American soldiers in WWI called `` Doughboys ''
+   What did Richard Feynman say upon hearing he would receive the Nobel Prize in Physics ?
+   Where did the name root beer come from ?
+   How do you calculate the change in enthalpy of a chemical reaction ?
+   What is the difference between college and graduate school ?
+   How did shipyard inspector James J. Kilroy designate equipment as being satisfactory ?
+== numeric value 654
+   What is Dick Clark 's birthday ?
+   How many people have been killed in wars , armed conflicts ?
+   How many freckles does Howdy Doody have on his face ?
+   How many hours of work does it take a typist to complete a 100-page screenplay ?
+   In which year was the cartoon character Chilly Willy created ?
+   How fast is light ?
+   What is the deepest area of the Arctic Ocean ?
+   How many e-commerce companies are started every day ?
+== entity 901
+   What was the name of Sergeant Preston of the Yukon 's lead dog ?
+   What plant has the largest seed ?
+   What TV series featured Neal , a martini-drinking St. Bernard ?
+   What line of candy products included Super Skrunch and Peanut Butter Oompas ?
+   What is a conifer ?
+   What is the last name of Lucy and Linus from the Peanut 's comic strip ?
+   Where do I find information for foreclosure properties on the Internet ?
+   What animal has been called The Poor Man 's Cow ?
+== abbreviation 75
+   What does the acronym CPR mean ?
+   What does NASA stand for ?
+   What is the full form of .com ?
+   What does VCR stand for ?
+   What is SAP ?
+   What 's the abbreviation for limited partnership ?
+   What is the full name of the PLO ?
+   When reading classified ads , what does EENTY : other stand for ?
+== human being 991
+   Who commanded the French forces at the Battle of Orleans ?
+   Who is the Queen of Holland ?
+   What Texas surgeon performed the first artificial heart transplant ?
+   Who said : `` What contemptible scoundrel stole the cork from my lunch ? ''
+   What President-to-be was the first member of Congress to enlist following the attack on Pearl Harbor ?
+   Which of the following actors worked in New York 's Yiddish Theater ?
+   What basketball player is credited with 23 , 924 rebounds ?
+   What Russian composer 's Prelude in C Sharp Minor brought him fame and fortune ?
+== location 665
+   Where is Glasgow ?
+   What African country is governed from Ouagadougou ?
+   What was the only country in the Western Hemisphere to join the Russian-led boycott of the 1984 Summer Olympics ?
+   Where are all European and American eels born ?
+   What is the habitat of the chickadee ?
+   What are Britain 's two longest rivers ?
+   Where is the bridge over the river Kwai ?
+   What continent 's name appears on the upper left corner of a Budweiser label ?
+
+
+--- turn 3 ---
+```python
+labels2 = {
+ 'description and abstract concept': 'question asks for a definition, description, manner, reason, or abstract concept (how, why, what is the meaning of, what is X)',
+ 'numeric value': 'question asks for a number, count, date, year, money, size, speed, duration, distance, or other numeric value',
+ 'entity': 'question asks for a thing: animal, plant, body part, color, creative work, food, event, language, product, sport, substance, symbol, vehicle, word, or other non-person object',
+ 'abbreviation': 'question asks what an abbreviation or acronym stands for, or for the abbreviation of something',
+ 'human being': 'question asks for a person, group of people, organization, or title of a person (who, which actor, which president)',
+ 'location': 'question asks for a place: city, country, state, mountain, river, continent, address, or other location',
+}
+res2 = jev_classify(uniq, labels2, instruction="Which type of answer does this question expect?")
+# average the two runs
+avg = {}
+for q, r1, r2 in zip(uniq, res, res2):
+    avg[q] = {k: (r1[k] + r2[k]) / 2 for k in labels2}
+pred2 = {q: max(r, key=r.get) for q, r in avg.items()}
+pred_b = {q: max(r, key=r.get) for q, r in zip(uniq, res2)}
+print(Counter(pred_b[q] for q in qs))
+print(Counter(pred2[q] for q in qs))
+agree = sum(pred[q] == pred_b[q] for q in uniq)
+print(agree, len(uniq))
+random.seed(1)
+for lab in ['abbreviation', 'entity']:
+    ql = [q for q in uniq if pred2[q] == lab]
+    print("==", lab, len(ql))
+    for q in random.sample(ql, min(12, len(ql))):
+        print("  ", q)
+```
+OUTPUT:
+Counter({'human being': 5010, 'description and abstract concept': 4985, 'abbreviation': 4681, 'location': 3778, 'entity': 3595, 'numeric value': 3482})
+Counter({'human being': 4980, 'description and abstract concept': 4893, 'abbreviation': 4678, 'location': 3761, 'entity': 3737, 'numeric value': 3482})
+3953 4151
+== abbreviation 73
+   What does the acronym CPR mean ?
+   What does VCR stand for ?
+   What does NAFTA stand for ?
+   What does HIV stand for ?
+   What does LOL mean ?
+   What is the acronym for the National Bureau of Investigation ?
+   What does IBM stand for ?
+   What does BUD stand for ?
+   What 's the abbreviation for trinitrotoluene ?
+   What does G.M.T. stand for ?
+   What does e.g. stand for ?
+   What is AFS ?
+== entity 800
+   What movie tour of the Roman empire features the admonition : `` Row well and live '' ?
+   Name the four stories contained in Edith Wharton 's `` Old New York . ''
+   Name a movie about the Sioux Indians starring Kevin Costner .
+   What comic strip sometimes features a mailman named Beasley ?
+   What Peter Blatty novel recounts the horrors of Regan MacNeil 's possession by the devil ?
+   What is the trademark of a Washington Redskin 's fan ?
+   What 's the sequel to Alice 's Adventures in Wonderland ?
+   What two major world religions began in India ?
+   What creature scares people in the film `` Jaws '' ?
+   What is the name of the second space shuttle ?
+   What 2 statues did France give to other countries ?
+   What was organized as a Confederate veterans ' social club in Pulaski , in Tennessee , in 1866 ?
+
+
+--- turn 4 ---
+```python
+dis = [q for q in uniq if (pred[q]=='entity') != (pred_b[q]=='entity')]
+print(len(dis), sum(1 for q in qs if q in set(dis)))
+random.seed(2)
+for q in random.sample(dis, 25):
+    print(pred[q][:5], pred_b[q][:5], pred2[q][:5], '|', q)
+
+yn = jev_yesno(uniq, "Is the answer to this question a non-human thing or entity (such as an animal, plant, food, product, creative work, event, language, color, body part, sport, substance, vehicle, symbol, or word), rather than a person, place, number, abbreviation, or description?")
+ynd = dict(zip(uniq, yn))
+for t in [0.3,0.4,0.5,0.6]:
+    print(t, sum(1 for q in qs if ynd[q]>t))
+print(sum(1 for q in qs if ynd[q]>0.5 and pred2[q]=='entity'))
+```
+OUTPUT:
+161 846
+entit locat locat | What is the principal river of Ireland ?
+entit human entit | Who is Snoopy 's arch-enemy ?
+entit locat locat | Where in a tree does photosynthesis occur ?
+human entit human | What bottled-up TV character was born in Baghdad ?
+entit descr descr | What is ethylene ?
+entit descr descr | What is agent orange ?
+entit descr descr | What is white chocolate ?
+entit descr descr | What was The Living Room War ?
+entit descr entit | What 's a `` coup de poing '' to a French boxer ?
+entit descr descr | What is the Lost Colony ?
+numer entit entit | What is the HIGHEST Roman numeral ?
+entit descr descr | What are boxcars ?
+human entit entit | What is the most common boy 's or girl 's name ?
+entit descr descr | What is paracetamol ?
+entit human human | Who does the advertizing for Frito-Lay ?
+entit descr descr | What are hook worms ?
+entit descr entit | What is the movie Jonathan Livingstone Seagull ?
+entit descr entit | What is Boston Kreme ?
+entit descr descr | What is crabgrass ?
+entit descr descr | What is a stratocaster ?
+entit locat entit | What man-made waterways is 1.76 miles long ?
+entit descr descr | What is amezaiku ?
+entit descr descr | What is the Milky Way ?
+entit locat locat | Where did Wile E. Coyote always get his devices ?
+entit descr descr | What is the `` coppertop '' battery ?
+0.3 8493
+0.4 6785
+0.5 5357
+0.6 4570
+3212
+
+
+--- turn 5 ---
+```python
+final = {}
+for q, r1, r2 in zip(uniq, res, res2):
+    d = {k: (r1[k] + r2[k]) / 2 for k in labels2}
+    d['entity'] = (r1['entity'] + r2['entity'] + ynd[q]) / 3
+    final[q] = max(d, key=d.get)
+cf = Counter(final[q] for q in qs)
+print(cf)
+print(cf['entity'])
+```
+OUTPUT:
+Counter({'human being': 4993, 'description and abstract concept': 4803, 'abbreviation': 4678, 'entity': 3787, 'location': 3783, 'numeric value': 3487})
+3787
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: 3787")
+```
+FINAL: Answer: 3787

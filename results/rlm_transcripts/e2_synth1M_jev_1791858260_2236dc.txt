@@ -1,0 +1,269 @@
+Query: In the above data, how many data points should be classified as label 'description and abstract concept'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines=context.split('\n')
+print(len(lines))
+print(context[-800:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+25540
+23 || User: 40874 || Instance: What Italian city of 155 were Leonardo da Vinci , Michaelangelo , and Machiavelli all working in ?
+Date: Mar 07, 2024 || User: 20875 || Instance: Which country is the largest country in Latin America ?
+Date: Mar 16, 2023 || User: 77825 || Instance: What does IBM stand for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 1 ---
+```python
+import re
+lines=[l for l in context.split('\n') if l.startswith('Date:') and '|| Instance:' in l]
+qs=[l.split('|| Instance:',1)[1].strip() for l in lines]
+print(len(qs), len(set(qs)))
+uq=list(set(qs))
+labels={
+ 'description and abstract concept':'answer is a description, definition, explanation, reason, manner, or abstract concept',
+ 'numeric value':'answer is a number, count, date, amount, money, duration, size, or other numeric value',
+ 'entity':'answer is a thing, animal, food, product, body part, color, sport, creative work, event, substance, etc. (non-person, non-location entity)',
+ 'abbreviation':'answer is an abbreviation or the expansion of an abbreviation/acronym',
+ 'human being':'answer is a person, group of people, or an individual by name or description',
+ 'location':'answer is a place such as a city, country, state, mountain, or other location'}
+res=jev_classify(uq,labels,instruction="What type of answer does this question ask for?")
+pred={q:max(r,key=r.get) for q,r in zip(uq,res)}
+from collections import Counter
+c=Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 4938, 'description and abstract concept': 4872, 'abbreviation': 4679, 'entity': 3779, 'location': 3754, 'numeric value': 3509})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(1)
+ab=[q for q in uq if pred[q]=='abbreviation']
+print(len(ab))
+for q in random.sample(ab,25): print(q)
+```
+OUTPUT:
+73
+What is p.m. an abbreviation for , as in 5 p.m. ?
+What does the abbreviation IOC stand for ?
+What does BTU mean ?
+What does `` B.Y.O.B. '' mean ?
+What is the abbreviation of General Motors ?
+What is AFS ?
+What does NAFTA stand for ?
+What is BPH ?
+What does IBM stand for ?
+What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+What does MSG stand for ?
+What is DSL ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does snafu stand for ?
+What does SHIELD stand for ?
+What is the abbreviation of the International Olympic Committee ?
+What does Ms. , Miss , and Mrs. stand for ?
+What does the channel ESPN stand for ?
+CNN is an acronym for what ?
+What is SAP ?
+What is the acronym for the rating system for air conditioner efficiency ?
+What does IOC stand for ?
+What does CNN stand for ?
+What is DTMF ?
+What does CPR stand for ?
+
+
+--- turn 3 ---
+```python
+random.seed(2)
+de=[q for q in uq if pred[q]=='description and abstract concept']
+print(len(de))
+for q in random.sample(de,40): print(q)
+print('----')
+# also look at borderline: second-highest description
+bord=[(q,r) for q,r in zip(uq,res) if pred[q]!='description and abstract concept' and r['description and abstract concept']>0.25]
+print(len(bord))
+for q,r in random.sample(bord,min(25,len(bord))): print(pred[q], round(r['description and abstract concept'],2), q)
+```
+OUTPUT:
+952
+What is a tonne ?
+What is the origin of U.S. Army sergeant 's stripes ?
+How did Super President gain his powers on the animated series ?
+Why do people shake hands to show friendliness ?
+What is a wart ?
+What are amphibians ?
+What are the short- and long-term effects of underage drinking ?
+What is saltpeter ?
+How do companies cut paper so thin ?
+How do you clean up a cache ?
+What is Linux ?
+How do I know if I am pregnant ?
+What is the origin of the peace symbol ?
+Why do the chickenpoxs last so long ?
+How do windmills work ?
+What causes a person to have constantly sweaty hands and feet ?
+Why is Indiglo called Indiglo ?
+Why did the Globe Theatre burn down ?
+What is the history of the soft drink Mr. Pibb ?
+What is tyvek ?
+How do you write a correct critical analysis of a poem ?
+How do you determine heating requirements for your home ?
+What do Christian Scientists believe in ?
+What is viscosity ?
+What is a bourdon tube ?
+Why does a woman have to be a virgin to be a nun ?
+What is the definition of the term `` weapons system '' ?
+Why did the world enter a global depression in 1929 ?
+What is a `` node '' in computer terms ?
+What is moxie ?
+How do you throw a housewarming party ?
+What causes rust ?
+What is an ecological niche ?
+What is the origin of the word assassinate ?
+How do you find the area of a circle ?
+How can I get a CCT diagram ?
+How does one correctly pronounce ` qigong ' ?
+What is a pyrotechnic display ?
+How did the Great Depression affect Japan 's history ?
+How do you get a pointsettia to turn red ?
+----
+65
+entity 0.48 What was the `` Dead Man 's Hand '' ?
+entity 0.47 What are vermicilli , rigati , zitoni , and tubetti ?
+entity 0.34 What does Visine get out ?
+human being 0.43 What is a horologist ?
+entity 0.41 What did Mighty Mouse always sing as he went into action ?
+entity 0.47 What 's the Olympic motto ?
+entity 0.42 What is Larry King 's job ?
+entity 0.26 What is the occupation of Nicholas Cage ?
+entity 0.28 What was the occupation of Mandy Rice-Davies ?
+entity 0.28 What does the technique called `` cold fusion '' produce ?
+entity 0.3 What are the lyrics to `` Smelly Cat '' ?
+entity 0.27 What does the method called `` cold fusion '' create ?
+location 0.31 What is the orgin of xoxoxox ?
+entity 0.29 What is Steve Rogers 's profession when he 's not Captain America ?
+entity 0.45 What was the rallying cry of the early American revolutionaries ?
+entity 0.26 What category does the color pink denote in the Trivial Pursuit Baby Boomer Edition ?
+entity 0.29 What Muhammad Ali maneuver was George Foreman the first victim of ?
+entity 0.27 What was Al Capone finally imprisoned for , in 1931 ?
+numeric value 0.34 How fast is a 45Mhz processor ?
+entity 0.38 What is `` bloodhound '' ?
+location 0.31 Where can I find the history of the Taiwanese language ?
+entity 0.28 What is Nicholas Cage 's occupation ?
+entity 0.47 What did the only repealed amendment to the U.S. Constitution deal with ?
+entity 0.36 What phenomenon would you expect to read about in the monthly publication The Bigfoot News ?
+abbreviation 0.4 What is HDLC ?
+
+
+--- turn 4 ---
+```python
+labels2={
+ 'description and abstract concept':'asks for a definition, description, explanation, reason, manner (how/why), meaning, origin, or an abstract concept, e.g. "What is a wart?", "Why is the sky blue?", "How do windmills work?"',
+ 'numeric value':'asks for a number, count, date, year, money amount, duration, speed, size, weight, percentage, or other numeric value',
+ 'entity':'asks for a concrete thing: animal, food, plant, product, body part, color, sport, creative work, event, substance, language, instrument, vehicle, term, symbol, or other non-person non-place thing',
+ 'abbreviation':'asks what an abbreviation or acronym stands for, or for the abbreviation of something',
+ 'human being':'asks who a person is, or for a person, group, organization, or title of a person; includes occupation of a named individual only if asking who',
+ 'location':'asks for a place: city, country, state, mountain, river, address, or other location'}
+res2=jev_classify(uq,labels2,instruction="Which category best describes the answer to this trivia question (TREC question classification)?")
+pred2={q:max(r,key=r.get) for q,r in zip(uq,res2)}
+c2=Counter(pred2[q] for q in qs)
+print(c2)
+agree=sum(pred[q]==pred2[q] for q in uq); print(agree,len(uq))
+dif=[q for q in uq if (pred[q]=='description and abstract concept')!=(pred2[q]=='description and abstract concept')]
+print(len(dif))
+random.seed(3)
+for q in random.sample(dif,min(40,len(dif))): print(pred[q][:6],'|',pred2[q][:6],'|',q)
+```
+OUTPUT:
+Counter({'human being': 5064, 'abbreviation': 4873, 'description and abstract concept': 4665, 'location': 3800, 'entity': 3620, 'numeric value': 3509})
+4052 4151
+42
+locati | descri | Where did the marriage ceremony come from ?
+descri | human  | What does Nicholas Cage do for a living ?
+descri | entity | What are the seven virtues ?
+descri | abbrev | What does the E stand for in the equation E=mc2 ?
+entity | descri | What is `` bloodhound '' ?
+descri | entity | What 's the last line of Dickens 's A Christmas Carol ?
+entity | descri | What 's a `` coup de poing '' to a French boxer ?
+descri | entity | What is an example of an actual case of using the Fourteenth Amendment ?
+locati | descri | Where can I find the history of the Taiwanese language ?
+descri | entity | What did n't Rocky Marciano do in his pro boxing career ?
+descri | human  | What does Larry King do for a living ?
+entity | descri | What is a rhomboideus minor ?
+descri | entity | What is the Order of the Arrow in Boy Scouts ?
+human  | descri | What class is categorized as the bourgeoisie ?
+locati | descri | What is the cultural origin of the ceremony of potlatch ?
+descri | entity | What did FCC chairman Newton Minow declare TV to be on May 9 , 1961 ?
+locati | descri | Where did Indian Pudding come from ?
+locati | descri | Where does chocolate come from ?
+descri | human  | What is Nathan Hamill 's role in the new Star Wars prequel ?
+descri | entity | What according to the Kinsey Institute , is the sexual preference of four percent of American males ?
+human  | descri | What is a horologist ?
+descri | entity | What kind of greeting is appropriate to send on Yom Kippur ?
+descri | entity | What are the most common causes of death in the U.S. ?
+entity | descri | What is the `` coppertop '' battery ?
+descri | entity | What are Cobol , Fortran , and Pascal ?
+descri | human  | What are John C. Calhoun and Henry Clay known as ?
+entity | descri | What is Bombay duck ?
+descri | entity | What 's new in the postal world in 1999 ?
+descri | human  | What does Robin Williams do ?
+locati | descri | What is the orgin of xoxoxox ?
+descri | entity | What can communications satellites offer yachts ?
+descri | abbrev | What does the `` c '' stand for in the equation E=mc2 ?
+entity | descri | What is a Jellicle Cat ?
+entity | descri | What is a Chinese `` spouting '' bowl ?
+entity | descri | What was the `` Dead Man 's Hand '' ?
+locati | descri | What is the origin of `` barbeque '' ?
+descri | entity | What direction do the best surfing beaches face ?
+descri | entity | What are the Greek numerals ?
+descri | entity | What are snowballs to a hot-rodder ?
+descri | human  | What information can you tell me about actor James Cromwell ?
+
+
+--- turn 5 ---
+```python
+ens={}
+for q,r1,r2 in zip(uq,res,res2):
+    ens[q]=max(labels,key=lambda k:r1[k]+r2[k])
+ce=Counter(ens[q] for q in qs)
+print(ce)
+FINAL_n=ce['description and abstract concept']
+print(FINAL_n)
+```
+OUTPUT:
+Counter({'human being': 5003, 'abbreviation': 4873, 'description and abstract concept': 4680, 'location': 3786, 'entity': 3680, 'numeric value': 3509})
+4680
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: 4680")
+```
+FINAL: Answer: 4680

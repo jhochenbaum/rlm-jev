@@ -1,0 +1,13 @@
+{
+ "recent": 0.75,
+ "earliest": 0.85,
+ "random": 0.75,
+ "full": 1.0,
+ "n": 20,
+ "by_task_recent": {
+  "TASK_TYPE.LEAST_FREQ": 1.0,
+  "TASK_TYPE.MOST_FREQ": 1.0,
+  "TASK_TYPE.NUMERIC_ONE_CLASS": 0.0,
+  "TASK_TYPE.RELATIVE_FREQ": 0.786
+ }
+}

@@ -1,0 +1,325 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: human being is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,486,714 characters (~621,678 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</br>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 04, 2023 || User: 24937 || Instance: What are the most common causes of death in the U.S. ?
+Date: Apr 13, 2022 || User: 24926 || Instance: What 19th-century painter died in the Marquesas Islands ?
+Date: Dec 24, 2022 || User: 79525 || Instance: What does NASDAQ stand for ?
+Date: Mar 22, 2022 || User: 44771 || Instance: How many tenths of the Earth 's surface lie under water ?
+Date: Jun 02, 2025 || User: 40066 || Instance: Who famously rode to warn the people of Massachusetts that the British were coming ?
+Date: Jun 18, 2022 || User: 33915 || Instance: Who was the first Taiwanese President ?
+Date: Feb 11, 2025 || User: 60605 || Instance: How much time does the blinking of an eye take ?
+Date: Mar 17, 2025 || User: 93915 || Instance: How long is human gestation ?
+Date: Nov 18, 2022 || User: 28441 || Instance: Who is Karenna Gore , Al Gore 's oldest daughter , married to ?
+Date: Jun 23, 2023 || User: 78131 || Instance: How much do drugs to treat tuberculosis cost ?
+Date: May 25, 2023 || User: 5
+....
+ of ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+25540
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r'Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uniq = list(set(qs))
+labels = {
+ 'human being': 'the answer is a person or group of people (who)',
+ 'entity': 'the answer is a thing, animal, product, food, creative work, event, color, body part, etc.',
+ 'abbreviation': 'the answer is an abbreviation or acronym, or what an abbreviation stands for',
+ 'location': 'the answer is a place, city, country, mountain, etc.',
+ 'description and abstract concept': 'the answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'the answer is a number, date, count, money, distance, duration, etc.',
+}
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+25531 4150
+Counter({'numeric value': 5397, 'entity': 5231, 'location': 4186, 'abbreviation': 3921, 'description and abstract concept': 3526, 'human being': 3270})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(0)
+abbr = [q for q in uniq if pred[q]=='abbreviation']
+print(len(abbr))
+for q in random.sample(abbr, 25): print(q)
+
+labels2 = {
+ 'human being': 'question asks for a person, people, group, organization, or a person\'s name/identity (who)',
+ 'entity': 'answer is a thing, animal, product, food, creative work, event, color, body part, language, sport, substance, etc.',
+ 'abbreviation': 'question asks what an abbreviation/acronym stands for or the abbreviated form of something',
+ 'location': 'answer is a place, city, country, state, mountain, river, etc. (where)',
+ 'description and abstract concept': 'answer is a definition, description, manner, reason, or abstract concept (why, how, what is)',
+ 'numeric value': 'answer is a number, date, count, money, distance, duration, speed, etc.',
+}
+res2 = jev_classify(uniq, labels2, instruction="What type of answer does this question ask for?")
+pred2 = {q: max(r, key=r.get) for q, r in zip(uniq, res2)}
+c2 = Counter(pred2[q] for q in qs)
+print(c2)
+```
+OUTPUT:
+78
+What is the abbreviated expression for the National Bureau of Investigation ?
+What is BPH ?
+What does S.O.S. stand for ?
+What does NAFTA stand for ?
+What 's the abbreviation for trinitrotoluene ?
+What does SIDS stand for ?
+What does the abbreviation cwt. ?
+What does the abbreviation IOC stand for ?
+What is AFS ?
+What does the abbreviation AIDS stand for ?
+What does CPR stand for ?
+What is the abbreviation of General Motors ?
+What does IBM stand for ?
+What does LOL mean ?
+What does IOC stand for ?
+What is the abbreviation for Original Equipment Manufacturer ?
+What is the abbreviation of the International Olympic Committee ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does G.M.T. stand for ?
+What does the channel ESPN stand for ?
+What does MSG stand for ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+What does e.g. stand for ?
+What is DEET ?
+What do the letters D.C. stand for in Washington , D.C. ?
+Counter({'numeric value': 5387, 'entity': 4922, 'location': 4144, 'description and abstract concept': 3987, 'abbreviation': 3713, 'human being': 3378})
+
+
+--- turn 4 ---
+```python
+cnt = Counter(qs)
+abbr_u = [q for q in uniq if pred[q]=='abbreviation']
+print(sum(cnt[q] for q in abbr_u))
+for q in sorted(abbr_u, key=lambda q:-cnt[q])[:15]: print(cnt[q], q)
+
+# heuristic regex for abbreviation
+rx = re.compile(r'stand for|abbreviat|acronym|stands for|initials', re.I)
+print('regex abbr rows:', sum(cnt[q] for q in uniq if rx.search(q)))
+
+# yes/no cross-check on unique questions
+pa = jev_yesno(uniq, "Is the answer to this question an abbreviation or acronym, or the expansion of one?")
+ph = jev_yesno(uniq, "Is the answer to this question a person or group of people?")
+print('abbr yes rows:', sum(cnt[q] for q,p in zip(uniq,pa) if p>0.5))
+print('human yes rows:', sum(cnt[q] for q,p in zip(uniq,ph) if p>0.5))
+print('who rows:', sum(cnt[q] for q in uniq if re.match(r'\s*(Who|Whom|Whose)\b', q)))
+```
+OUTPUT:
+3921
+51 What does HIV stand for ?
+51 What is the abbreviation of the National Bureau of Investigation ?
+51 What does INRI stand for when used on Jesus ' cross ?
+51 What does ` PSI ' stand for ?
+51 CPR is the abbreviation for what ?
+51 What does S.O.S. stand for ?
+51 What is the abbreviation of the International Olympic Committee ?
+51 What does NASDAQ stand for ?
+51 What is HDLC ?
+51 What do the letters D.C. stand for in Washington , D.C. ?
+51 What is the acronym for the National Bureau of Investigation ?
+51 In a computer , what does SCSI mean ?
+51 What does `` B.Y.O.B. '' mean ?
+51 What is the full form of .com ?
+51 When reading classified ads , what does EENTY : other stand for ?
+regex abbr rows: 3062
+abbr yes rows: 4376
+human yes rows: 3862
+who rows: 1880
+
+
+--- turn 5 ---
+```python
+# count distribution
+print(Counter(cnt.values()).most_common(10))
+# abbreviation candidates: pred abbr & strict regex-ish review
+abbr_u = [q for q in uniq if pred[q]=='abbreviation' or pred2[q]=='abbreviation']
+print(len(abbr_u), sum(cnt[q] for q in abbr_u))
+for q in sorted(abbr_u, key=lambda q:cnt[q])[:40]: print(cnt[q], pred[q], pred2[q], q)
+# human candidates
+hum_u = [q for q in uniq if pred[q]=='human being' or pred2[q]=='human being']
+print(len(hum_u), sum(cnt[q] for q in hum_u))
+print(sum(cnt[q] for q in uniq if pred[q]=='human being' and pred2[q]=='human being'))
+```
+OUTPUT:
+[(4, 1299), (7, 866), (3, 609), (6, 429), (9, 303), (8, 247), (2, 153), (5, 145), (51, 70), (1, 18)]
+79 3972
+4 abbreviation description and abstract concept What is the literal meaning of `` D-DAY '' ?
+50 abbreviation abbreviation What does BMW stand for ?
+50 abbreviation abbreviation What does R.E.M. stand for , as in the rock group R.E.M. ?
+50 abbreviation abbreviation What is the abbreviation for micro ?
+50 abbreviation abbreviation What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+50 abbreviation abbreviation What does SHIELD stand for ?
+50 abbreviation abbreviation What does CNN stand for ?
+50 abbreviation abbreviation What does SIDS stand for ?
+50 abbreviation abbreviation What 's the abbreviation for trinitrotoluene ?
+50 abbreviation abbreviation What is LMDS ?
+50 abbreviation abbreviation What does IQ stand for ?
+51 abbreviation abbreviation What does HIV stand for ?
+51 abbreviation abbreviation What is the abbreviation of the National Bureau of Investigation ?
+51 abbreviation abbreviation What does INRI stand for when used on Jesus ' cross ?
+51 abbreviation abbreviation What does ` PSI ' stand for ?
+51 abbreviation abbreviation CPR is the abbreviation for what ?
+51 abbreviation abbreviation What does S.O.S. stand for ?
+51 abbreviation abbreviation What is the abbreviation of the International Olympic Committee ?
+51 abbreviation abbreviation What does NASDAQ stand for ?
+51 abbreviation description and abstract concept What is HDLC ?
+51 abbreviation abbreviation What do the letters D.C. stand for in Washington , D.C. ?
+51 abbreviation abbreviation What is the acronym for the National Bureau of Investigation ?
+51 abbreviation abbreviation In a computer , what does SCSI mean ?
+51 description and abstract concept abbreviation What does the E stand for in the equation E=mc2 ?
+51 abbreviation abbreviation What does `` B.Y.O.B. '' mean ?
+51 abbreviation abbreviation What is the full form of .com ?
+51 abbreviation abbreviation When reading classified ads , what does EENTY : other stand for ?
+51 abbreviation abbreviation What does Ms. , Miss , and Mrs. stand for ?
+51 abbreviation abbreviation What does the channel ESPN stand for ?
+51 abbreviation abbreviation What does IBM stand for ?
+51 abbreviation abbreviation What is IOC an abbreviation of ?
+51 abbreviation abbreviation What is the abbreviation of the company name ` General Motors ' ?
+51 abbreviation abbreviation What does the acronym CPR mean ?
+51 abbreviation description and abstract concept What is RAM in the computer ?
+51 abbreviation abbreviation What does EKG stand for ?
+51 abbreviation abbreviation What does BUD stand for ?
+51 abbreviation abbreviation What does CPR stand for ?
+51 abbreviation abbreviation What does RCA stand for ?
+51 abbreviation abbreviation What is the abbreviated term used for the National Bureau of Investigation ?
+51 abbreviation abbreviation What is the full name of the PLO ?
+1018 3437
+3211
+
+
+--- turn 6 ---
+```python
+# Review all abbreviation candidates (union) with counts, flagging disagreements
+for q in sorted(abbr_u, key=lambda q:-cnt[q]):
+    if not (pred[q]=='abbreviation' and pred2[q]=='abbreviation'):
+        print(cnt[q], pred[q], '|', pred2[q], '|', q)
+
+both_abbr = sum(cnt[q] for q in uniq if pred[q]=='abbreviation' and pred2[q]=='abbreviation')
+any_abbr = sum(cnt[q] for q in abbr_u)
+both_hum = sum(cnt[q] for q in uniq if pred[q]=='human being' and pred2[q]=='human being')
+any_hum = sum(cnt[q] for q in hum_u)
+print('abbr both/any:', both_abbr, any_abbr)
+print('human both/any:', both_hum, any_hum)
+# Human questions with ≥ 50 counts, and a yes/no cross check for human on unique ones that start with Who
+</br>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 13
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 7 ---
+```python
+both_abbr = sum(cnt[q] for q in uniq if pred[q]=='abbreviation' and pred2[q]=='abbreviation')
+any_abbr = sum(cnt[q] for q in abbr_u)
+both_hum = sum(cnt[q] for q in uniq if pred[q]=='human being' and pred2[q]=='human being')
+any_hum = sum(cnt[q] for q in hum_u)
+print('abbr both/any:', both_abbr, any_abbr)
+print('human both/any:', both_hum, any_hum)
+
+# disagreement review for abbreviation
+for q in sorted(abbr_u, key=lambda q:-cnt[q]):
+    if not (pred[q]=='abbreviation' and pred2[q]=='abbreviation'):
+        print(cnt[q], pred[q], '|', pred2[q], '|', q)
+
+# human: non-'Who' questions predicted human by both
+nonwho = [q for q in uniq if pred[q]=='human being' and pred2[q]=='human being' and not re.match(r'\s*(Who|Whom|Whose)\b', q)]
+random.seed(1)
+for q in random.sample(nonwho, min(15, len(nonwho))): print(cnt[q], q)
+
+# Who questions not predicted human
+whonot = [q for q in uniq if re.match(r'\s*(Who|Whom|Whose)\b', q) and not (pred[q]=='human being' or pred2[q]=='human being')]
+print(len(whonot), sum(cnt[q] for q in whonot))
+for q in whonot[:15]: print(cnt[q], q)
+```
+OUTPUT:
+abbr both/any: 3662 3972
+human both/any: 3211 3437
+51 abbreviation | description and abstract concept | What is HDLC ?
+51 description and abstract concept | abbreviation | What does the E stand for in the equation E=mc2 ?
+51 abbreviation | description and abstract concept | What is RAM in the computer ?
+51 abbreviation | description and abstract concept | What is DTMF ?
+51 abbreviation | description and abstract concept | What is DEET ?
+51 abbreviation | description and abstract concept | What is SAP ?
+4 abbreviation | description and abstract concept | What is the literal meaning of `` D-DAY '' ?
+3 What is the full name of the man who invented the multicolored game cube that has 42.3 quintillion potential combinations ?
+4 What actor , who had greatest fame on TV , became the father of triplets ?
+4 Name the lawyer for Randy Craft .
+7 What 's a male witch called ?
+3 What are the characters ' names in the Scooby-Doo cartoon ?
+3 What actor and actress have made the most movies ?
+4 What TV sitcom character had the maiden name Ethel Potter ?
+4 What dictator has the nickname `` El Maximo '' ?
+4 What are the names of Jacques Cousteau 's two sons ?
+3 What TV comediennes 's characters include former movie star Nora Desmond , secretary Mrs. Wiggins and a housewife named Eunice ?
+4 What future Soviet dictator was training to be a priest when he got turned on to Marxism ?
+4 What Democratic prankster waved the train out of the station while Richard Nixon spoke from the caboose ?
+4 What comedienne calls her sister-in-law Captain Bligh and her mother-in-law Moby Dick ?
+3 What Hungarian cardinal was first a state prisoner and then a refugee in the U.S. embassy 1956-1971 ?
+4 Saddam Hussein was compared to whom by President Bush ?
+2 11
+5 Who were John F. Kennedy 's dogs ?
+6 Who was the first animal into space ?
+
+
+--- turn 8 ---
+```python
+FINAL("Answer: human being is less common than abbreviation")
+```
+FINAL: Answer: human being is less common than abbreviation

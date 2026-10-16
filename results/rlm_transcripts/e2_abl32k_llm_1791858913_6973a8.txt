@@ -1,0 +1,111 @@
+Query: In the above data, is label 'location' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: location is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 76,803 characters (~19,200 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('----')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('----')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 29, 2022 || User: 44436 || Instance: What does IOC stand for ?
+Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?
+Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?
+Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?
+Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?
+Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .
+Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?
+Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?
+Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?
+Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?
+Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?
+Date: May 01, 2024 || User: 
+----
+in 1992 ?
+Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+796
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r'Date: .*? \|\| User: \d+ \|\| Instance: (.*)', l)
+    if m:
+        qs.append(m.group(1))
+print(len(qs))
+
+cats = ['location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity']
+def mk(chunk):
+    s = ("Classify each question by the type of its answer into exactly one of: "
+         "'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n"
+         "(TREC question classification: abbreviation = abbreviations/expansions; entity = things, animals, products, etc.; "
+         "description = definitions, reasons, manner; human = person/group; location = places; numeric = counts, dates, money, etc.)\n"
+         "Reply with one line per question in the format 'N: category' and nothing else.\n\n")
+    for i, q in enumerate(chunk):
+        s += f"{i+1}: {q}\n"
+    return s
+
+size = 50
+chunks = [qs[i:i+size] for i in range(0, len(qs), size)]
+prompts = [mk(c) for c in chunks]
+results = []
+for i in range(0, len(prompts), 8):
+    results += llm_query_batched(prompts[i:i+8])
+
+labels = []
+for c, r in zip(chunks, results):
+    d = {}
+    for line in r.split('\n'):
+        m = re.match(r'\s*(\d+)\s*[:.]\s*(.*)', line)
+        if m:
+            d[int(m.group(1))] = m.group(2).strip().strip("'").lower()
+    for i in range(len(c)):
+        labels.append(d.get(i+1, 'MISSING'))
+from collections import Counter
+cnt = Counter(labels)
+print(cnt)
+```
+OUTPUT:
+787
+Counter({'abbreviation': 170, 'numeric value': 155, 'description and abstract concept': 124, 'location': 124, 'human being': 120, 'entity': 94})
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: location is less common than numeric value")
+```
+FINAL: Answer: location is less common than numeric value

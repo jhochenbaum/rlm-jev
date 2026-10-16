@@ -1,0 +1,65 @@
+Query: In the above data, is label 'entity' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: entity is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+for l in lines[:12]:
+    print(repr(l[:300]))
+print(repr(context[300:900]))
+```
+OUTPUT:
+796
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'."
+''
+'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.'
+''
+'Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?'
+'Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?'
+'Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?'
+'Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?'
+'Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?'
+'Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?'
+'Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?'
+'Date: Aug 09, 2022 || User: 58652 || Instance: What does LOL mean ?'
+'the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.\n\nDate: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?\nDate: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?\nDate: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?\nDate: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?\n'
+
+
+--- turn 1 ---
+```python
+import re
+items = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m:
+        items.append(m.group(1))
+print(len(items))
+
+labels = {
+    'location': 'answer is a place, such as a city, country, or landmark',
+    'human being': 'answer is a person or group of people',
+    'entity': 'answer is a thing, animal, product, food, creature, event, language, color, body part, or other concrete entity',
+    'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+    'numeric value': 'answer is a number, date, count, money, distance, duration, or other numeric value',
+    'description and abstract concept': 'answer is a description, definition, explanation, reason, manner, or abstract concept',
+}
+uniq = list(dict.fromkeys(items))
+res = jev_classify(uniq, labels, instruction="Which category best describes the answer to this question?")
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+from collections import Counter
+cnt = Counter(pred[q] for q in items)
+print(cnt)
+```
+OUTPUT:
+787
+Counter({'entity': 178, 'human being': 145, 'description and abstract concept': 127, 'abbreviation': 123, 'numeric value': 117, 'location': 97})
+
+
+--- turn 2 ---
+```python
+FINAL("Answer: entity is more common than numeric value")
+```
+FINAL: Answer: entity is more common than numeric value

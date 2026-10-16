@@ -1,0 +1,209 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'entity'? Give your final answer in the form 'Answer: human being is [X] entity', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,486,714 characters (~621,678 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-800:])
+lines = context.split('\n')
+print(len(lines))
+</br>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-800:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 04, 2023 || User: 24937 || Instance: What are the most common causes of death in the U.S. ?
+Date: Apr 13, 2022 || User: 24926 || Instance: What 19th-century painter died in the Marquesas Islands ?
+Date: Dec 24, 2022 || User: 79525 || Instance: What does NASDAQ stand for ?
+Date: Mar 22, 2022 || User: 44771 || Instance: How many tenths of the Earth 's surface lie under water ?
+Date: Jun 02, 2025 || User: 40066 || Instance: Who famously rode to warn the people of Massachusetts that the British were coming ?
+Date: Jun 18, 2022 || User: 33915 || Instance: Who was the first Taiwanese President ?
+Date: Feb 11, 2025 || User: 60605 || Instance: How much time does the blinking of an eye take ?
+Date: Mar 17, 2025 || User: 93915 || Instance: How long is human gestation ?
+Date: Nov 18, 2022 || User: 28441 || Instance: Who is Karenna Gore , Al Gore 's oldest daughter , married to ?
+Date: Jun 23, 2023 || User: 78131 || Instance: How much do drugs to treat tuberculosis cost ?
+Date: May 25, 2023 || User: 5
+....
+the first woman governor elected ?
+Date: Dec 17, 2024 || User: 49117 || Instance: The Orange Bowl is located in what city ?
+Date: Oct 30, 2023 || User: 46341 || Instance: Where did guinea pigs originate ?
+Date: May 02, 2025 || User: 66083 || Instance: What country was Brian Boru an 11th-century king of ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+25540
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r'Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uniq = list(set(qs))
+labels = {
+ 'human being': 'answer is a person or group of people (individual, group, title, description of a person)',
+ 'entity': 'answer is a thing: animal, body part, color, creature, currency, disease, event, food, instrument, language, letter, other object, plant, product, religion, sport, substance, symbol, technique, term, vehicle, word',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+ 'location': 'answer is a place: city, country, mountain, state, other location',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number: count, date, distance, money, order, percentage, period, speed, temperature, size, weight',
+}
+res = jev_classify(uniq, labels)
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+25531 4150
+Counter({'entity': 5690, 'numeric value': 5304, 'location': 3982, 'abbreviation': 3873, 'human being': 3553, 'description and abstract concept': 3129})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(1)
+for lab in ['entity','human being','abbreviation']:
+    cand = [q for q in uniq if pred[q]==lab]
+    print('==',lab,len(cand))
+    for q in random.sample(cand,15): print('  ',q)
+# Who-questions predicted as non-human
+who = [q for q in uniq if q.lower().startswith('who ')]
+print(len(who), Counter(pred[q] for q in who))
+</br>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 10
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 4 ---
+```python
+import random
+from collections import Counter
+random.seed(1)
+for lab in ['entity','human being','abbreviation']:
+    cand = [q for q in uniq if pred[q]==lab]
+    print('==',lab,len(cand))
+    for q in random.sample(cand,15): print('  ',q)
+who = [q for q in uniq if q.lower().startswith('who ')]
+print(len(who), Counter(pred[q] for q in who))
+```
+OUTPUT:
+== entity 946
+   Where are the Haversian canals ?
+   What Michelangelo sculpture is in Saint Peter 's Cathedral , Basilica , ?
+   What was the killer whale who died at Sea World of a fungal infection named ?
+   What kind of hat does Bat Masterson wear ?
+   What is a glory hole ?
+   What was `` America 's recessed-filter cigarette '' ?
+   What kind of patent did Ermal Fraze get in 1963 ?
+   Name of King Arthur 's sword ?
+   What happened during the Blackhawk Indian war of 1832 ?
+   What was the name of Robert Fulton 's most famous steamboat ?
+   What sports event is Meyer Wolfsheim supposed to have fixed in The Great Gatsby ?
+   In which Tennessee Williams play is one of the characters killed and devoured by a mob of starving children ?
+   What newspaper serves Salt Lake City ?
+   What is the origin of the word `` amen '' ?
+   What is the meaning of `` subaru ? ''
+== human being 1032
+   Who made the first airplane that could fly ?
+   Who was shot in the back during a Poker game in Deadwood , the Dakota territory ?
+   What is the name of Miss India 1994 ?
+   Who killed Lee Harvey Oswald ?
+   What film or films has Jude Law appeared in ?
+   What famous coach said `` if you can 't beat 'em in the alley , you can 't beat 'em on the ice '' ?
+   Who declared : `` I think I 'll go out and milk the elk '' ?
+   What director portrayed the commandant of the POW camp in 1953 's Stalag 17 ?
+   What singer 's hit song inspired the Dolly Parton Stallone movie Rhinestone ?
+   Name the designer of the shoe that spawned millions of plastic imitations , known as ` jellies ' .
+   What hockey player did Ronald Reagan joke he would swap Texas for ?
+   Who portrayed W.C. Fields in the film W.C. Fields and Me ?
+   Who was the star of Leave It to Beaver ?
+   With whom did Bush compare Saddam Hussein ?
+   Who was the lyricist and who was the composer between Gilbert and Sullivan ?
+== abbreviation 78
+   What is LMDS ?
+   What is the abbreviation of the National Bureau of Investigation ?
+   What is the abbreviation for Original Equipment Manufacturer ?
+   What does BUD stand for ?
+   What does BTU mean ?
+   What does ` PSI ' stand for ?
+   What does snafu stand for ?
+   What does CPR stand for ?
+   What does the abbreviation OAS stand for ?
+   What is the correct way to abbreviate cc. at the bottom of a business letter ?
+   What does RCA stand for ?
+   What is the acronym for the rating system for air conditioner efficiency ?
+   What does G.M.T. stand for ?
+   What is DEET ?
+   CNN is the abbreviation for what ?
+543 Counter({'human being': 535, 'entity': 8})
+
+
+--- turn 5 ---
+```python
+instr = "What type of answer does this question expect? Persons, groups, or people's names/titles/descriptions are 'human being'; things, animals, products, works, foods, etc. are 'entity'."
+res2 = jev_classify(uniq, labels, instruction=instr)
+pred2 = {q: max(r, key=r.get) for q, r in zip(uniq, res2)}
+c2 = Counter(pred2[q] for q in qs)
+print(c2)
+# soft counts
+soft = Counter()
+for q in qs:
+    pass
+p1 = dict(zip(uniq, res)); p2 = dict(zip(uniq, res2))
+for name, P in [('v1', p1), ('v2', p2)]:
+    s = Counter()
+    for q in qs:
+        for k, v in P[q].items(): s[k] += v
+    print(name, {k: round(v) for k, v in s.items()})
+print(sum(pred[q]!=pred2[q] for q in uniq))
+```
+OUTPUT:
+Counter({'entity': 6167, 'numeric value': 5368, 'location': 3839, 'abbreviation': 3611, 'human being': 3597, 'description and abstract concept': 2949})
+v1 {'human being': 3603, 'entity': 6088, 'abbreviation': 3477, 'location': 3792, 'description and abstract concept': 4024, 'numeric value': 4541}
+v2 {'human being': 3800, 'entity': 6928, 'abbreviation': 2891, 'location': 3702, 'description and abstract concept': 2942, 'numeric value': 5267}
+247
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: human being is less common than entity")
+```
+FINAL: Answer: human being is less common than entity

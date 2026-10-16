@@ -1,0 +1,571 @@
+Query: In the above data, is label 'abbreviation' more common, less common, or the same frequency as label 'human being'? Give your final answer in the form 'Answer: abbreviation is [X] human being', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-800:])
+lines = context.split('\n')
+print(len(lines))
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-800:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+....
+23 || User: 40874 || Instance: What Italian city of 155 were Leonardo da Vinci , Michaelangelo , and Machiavelli all working in ?
+Date: Mar 07, 2024 || User: 20875 || Instance: Which country is the largest country in Latin America ?
+Date: Mar 16, 2023 || User: 77825 || Instance: What does IBM stand for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+25540
+
+
+--- turn 2 ---
+```python
+import re
+inst = []
+for l in lines:
+    m = re.match(r'Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m:
+        inst.append(m.group(1))
+print(len(inst), len(set(inst)))
+uniq = list(set(inst))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, count, date, money, measurement, or other numeric value',
+ 'entity': 'answer is a thing: animal, food, product, object, creative work, event, substance, etc.',
+ 'abbreviation': 'answer is an abbreviation or acronym, or the expansion of one',
+ 'human being': 'answer is a person or group of people, or an individual description',
+ 'location': 'answer is a place: country, city, state, mountain, address, etc.',
+}
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+cnt = Counter(pred[q] for q in inst)
+print(cnt)
+```
+OUTPUT:
+25531 4151
+Counter({'human being': 4939, 'abbreviation': 4808, 'description and abstract concept': 4476, 'entity': 4019, 'location': 3784, 'numeric value': 3505})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(0)
+abbr_q = [q for q in uniq if pred[q]=='abbreviation']
+print(len(abbr_q))
+for q in random.sample(abbr_q, 25): print(q)
+# stricter yes/no
+p_abbr = jev_yesno(uniq, "Is the answer to this question an abbreviation/acronym or what an abbreviation stands for (e.g. 'What does IBM stand for?')?")
+pa = dict(zip(uniq, p_abbr))
+for t in [0.5,0.7,0.9]:
+    print(t, sum(1 for q in inst if pa[q]>t))
+p_hum = jev_yesno(uniq, "Is the answer to this question a person or group of people (who/whom)?")
+ph = dict(zip(uniq, p_hum))
+for t in [0.5,0.7,0.9]:
+    print(t, sum(1 for q in inst if ph[q]>t))
+```
+OUTPUT:
+75
+What does the abbreviation cwt. ?
+What does CNN stand for ?
+What does S.O.S. stand for ?
+What does NAFTA stand for ?
+What does snafu stand for ?
+What is the abbreviation of General Motors ?
+What is BPH ?
+What does the abbreviation IOC stand for ?
+What is the correct way to abbreviate cc. at the bottom of a business letter ?
+What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+What does CPR stand for ?
+What does IBM stand for ?
+What does BMW stand for ?
+What is HDLC ?
+What does SHIELD stand for ?
+What is the abbreviation of the International Olympic Committee ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does G.M.T. stand for ?
+What does the channel ESPN stand for ?
+What does MSG stand for ?
+What does IOC stand for ?
+What does e.g. stand for ?
+What is LMDS ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What is IOC an abbreviation of ?
+0.5 5211
+0.7 5020
+0.9 1479
+0.5 5322
+0.7 4988
+0.9 4003
+
+
+--- turn 4 ---
+```python
+from collections import Counter
+qc = Counter(inst)
+print(sorted(qc.values())[-20:], sum(1 for v in qc.values() if v==1))
+# abbreviation-predicted with counts
+abbr_sorted = sorted(abbr_q, key=lambda q:-qc[q])
+for q in abbr_sorted: print(qc[q], round(pa[q],2), q)
+```
+OUTPUT:
+[65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65] 1
+65 0.91 What is the abbreviation of the National Bureau of Investigation ?
+65 0.92 What does INRI stand for when used on Jesus ' cross ?
+65 0.9 What does ` PSI ' stand for ?
+65 0.9 What does S.O.S. stand for ?
+65 0.76 What is HDLC ?
+65 0.88 What is the acronym for the National Bureau of Investigation ?
+65 0.9 In a computer , what does SCSI mean ?
+65 0.87 When reading classified ads , what does EENTY : other stand for ?
+65 0.94 What does the channel ESPN stand for ?
+65 0.85 What does BMW stand for ?
+65 0.91 What is the abbreviation of the company name ` General Motors ' ?
+65 0.89 What does R.E.M. stand for , as in the rock group R.E.M. ?
+65 0.9 What does the acronym CPR mean ?
+65 0.88 What is the abbreviation for micro ?
+65 0.91 What does BUD stand for ?
+65 0.91 What does RCA stand for ?
+65 0.9 What is the abbreviated term used for the National Bureau of Investigation ?
+65 0.79 What is DTMF ?
+65 0.92 What does NAFTA stand for ?
+65 0.91 What does MSG stand for ?
+65 0.88 What is the acronym for the rating system for air conditioner efficiency ?
+65 0.92 What is the abbreviation for Original Equipment Manufacturer ?
+65 0.88 What is the abbreviated expression for the National Bureau of Investigation ?
+65 0.92 What does SHIELD stand for ?
+65 0.82 What does the abbreviation cwt. ?
+65 0.8 What is BPH ?
+65 0.93 What does BTU mean ?
+65 0.85 What does e.g. stand for ?
+65 0.83 What is AFS ?
+65 0.91 What 's the abbreviation for trinitrotoluene ?
+65 0.88 What does G.M.T. stand for ?
+65 0.75 What is p.m. an abbreviation for , as in 5 p.m. ?
+64 0.87 What does HIV stand for ?
+64 0.92 What is the abbreviation of the International Olympic Committee ?
+64 0.91 What do the letters D.C. stand for in Washington , D.C. ?
+64 0.91 What is the full form of .com ?
+64 0.83 What does IBM stand for ?
+64 0.79 What is IOC an abbreviation of ?
+64 0.72 What is RAM in the computer ?
+64 0.92 What does CPR stand for ?
+64 0.86 What does U.S.S.R. stand for ?
+64 0.81 What is RCD ?
+64 0.91 What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+64 0.83 What does the abbreviation AIDS stand for ?
+64 0.87 What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+64 0.78 What is SVHS ?
+64 0.84 What does the abbreviation OAS stand for ?
+64 0.88 What 's the abbreviation for limited partnership ?
+64 0.8 CNN is the abbreviation for what ?
+64 0.9 What does SIDS stand for ?
+64 0.83 What is the correct way to abbreviate cc. at the bottom of a business letter ?
+64 0.91 What is the abbreviation of General Motors ?
+64 0.89 What does snafu stand for ?
+64 0.9 What does the T.S. stand for in T.S. Eliot 's name ?
+64 0.78 What is LMDS ?
+64 0.9 What does IQ stand for ?
+64 0.81 CNN is an acronym for what ?
+64 0.88 What does NASA stand for ?
+63 0.89 What does NASDAQ stand for ?
+63 0.91 What does `` B.Y.O.B. '' mean ?
+63 0.87 What does Ms. , Miss , and Mrs. stand for ?
+63 0.92 What does EKG stand for ?
+63 0.86 What is the full name of the PLO ?
+63 0.92 What does VCR stand for ?
+63 0.9 What does LOL mean ?
+63 0.81 What is DSL ?
+63 0.93 What does pH stand for ?
+63 0.97 What does the word LASER mean ?
+62 0.81 CPR is the abbreviation for what ?
+62 0.83 What does the abbreviation IOC stand for ?
+62 0.89 What is the abbreviated form of the National Bureau of Investigation ?
+62 0.88 What does CNN stand for ?
+62 0.87 What does A&W of root beer fame stand for ?
+62 0.89 What does IOC stand for ?
+62 0.81 What is SAP ?
+
+
+--- turn 5 ---
+```python
+import numpy as np
+cv = sorted(qc.values(), reverse=True)
+print(len(cv), cv[:5], cv[75:90], cv[200:210], cv[-10:])
+print(Counter(min(v//10*10,70) for v in cv))
+hum_q = [q for q in uniq if pred[q]=='human being']
+print(len(hum_q), sum(qc[q] for q in hum_q))
+# borderline: those with high counts, show prob of human & abbr from classify
+idx = {q:i for i,q in enumerate(uniq)}
+hs = sorted(hum_q, key=lambda q:-qc[q])
+for q in hs[:100]:
+    r = res[idx[q]]
+    print(qc[q], round(r['human being'],2), round(ph[q],2), q)
+```
+OUTPUT:
+4151 [65, 65, 65, 65, 65] [62, 62, 62, 62, 62, 62, 6, 6, 6, 6, 6, 6, 6, 6, 6] [6, 6, 6, 6, 6, 6, 6, 6, 6, 6] [2, 2, 2, 2, 2, 2, 2, 2, 2, 1]
+Counter({0: 4070, 60: 81})
+985 4939
+6 1.0 0.96 Who created the character of Scrooge ?
+6 1.0 0.95 Who was Jane Goodall ?
+6 1.0 0.97 Who was the first Russian astronaut to walk in space ?
+6 1.0 0.92 Which former Ku Klux Klan member won an elected office in the U.S. ?
+6 0.99 0.93 Who is the man behind the pig-the man who pulls the strings and speaks for Miss Piggy ?
+6 0.96 0.85 What Catch-22 character is elected mayor of half a dozen Italian cities ?
+6 1.0 0.95 What American actress was the first to be called a `` vamp '' ?
+6 1.0 0.94 What was Fred Astaire 's dancing partner 's name ?
+6 1.0 0.94 What U.S. President showed a fondness for munching on bee pollen bars ?
+6 1.0 0.96 Who headed Hitler 's infamous Gestapo ?
+6 1.0 0.95 Who co-starred with Julie Andrews in Mary Poppins ?
+6 1.0 0.95 What English playwright penned : `` Where the bee sucks , so shall I '' ?
+6 1.0 0.95 Who is the head of the World Bank ?
+6 1.0 0.94 Who is section manager for guidance and control systems at JPL ?
+6 1.0 0.95 Whose singing voice was dubbed in for Natalie Wood in West Side Story and Audrey Hepburn in My Fair Lady ?
+6 1.0 0.93 What department store heir is responsible for raising a three-ton safe from the underwater wreckage of the Andrea Doria ?
+6 1.0 0.94 Who is the prophet that is most connected to the Dead Sea ?
+6 0.99 0.94 Who is Henry Butler ?
+6 1.0 0.96 Who was the conservationist who served as spokesperson for Post Grape Nuts ?
+6 1.0 0.94 Who killed JFK ?
+6 0.99 0.96 Who killed Lee Harvey Oswald ?
+6 1.0 0.96 Who starred with Charlie Chaplin in Modern Times and The Great Dictator ?
+6 1.0 0.95 Who was the star of Leave It to Beaver ?
+6 0.86 0.86 Who was known as the Time Master in comic books ?
+6 1.0 0.96 Who plays the cop in the movie `` Kindergarten Cop '' ?
+6 0.99 0.96 Who is Edmund Kemper ?
+6 0.97 0.92 In Dana 's `` Two Years Before the Mast , '' what seafarers lived in an abandoned oven on the beach at San Diego ?
+6 1.0 0.92 What athlete makes the most money from sports merchandise sales ?
+6 1.0 0.93 What U.S. President had brothers-in-law in the Confederate army ?
+6 1.0 0.96 Who played Al Jolson in the Jolson Story ?
+6 1.0 0.94 Name the poet of the poem which begins : I do not know much about gods ; but I think that the river Is a strong brown god-sullen , and untamed ?
+6 0.61 0.84 Which member of the Micronauts spent 1 years traveling the Microverse in the Marvel comics ?
+6 1.0 0.96 What baseball player was known as Charley Hustle ?
+6 1.0 0.97 Who was the bandleader mentor of Ella Fitzgerald with whom she cowrote `` A_Tisket , A-Tasket '' ?
+6 0.99 0.95 Who was the author of the famous fairy tale `` Snow White and Seven Dwarfs '' ?
+6 1.0 0.95 What Honeymooners actress did Television magazine name as 1953 's most promising star ?
+6 1.0 0.96 What suburban housewife and mother of three wrote The Feminine Mystique ?
+6 1.0 0.97 Who wrote The Ugly Duckling ?
+6 1.0 0.94 Who invented batteries ?
+6 1.0 0.95 Who is the youngest of the Beatles ?
+6 1.0 0.97 Who was Israel 's first prime minister ?
+6 0.99 0.87 What was Darth Vader 's son named ?
+6 1.0 0.94 What writer is famous for physically putting himself into the center of his subject matter ?
+6 1.0 0.97 Who was the 1st U.S. President ?
+6 0.59 0.28 What are the top boy names in the U.S. ?
+6 0.99 0.91 Who was the first President to appoint a woman to head a cabinet ?
+6 0.87 0.89 Who lived on the shores of the Gitchee Gumee River ?
+6 0.96 0.95 Whom did Friz Freleng add to the Warner Bros. cartoon ranks ?
+6 1.0 0.96 Who wrote The Red Badge of Courage ?
+6 1.0 0.96 What Nazi leader killed himself in jail just before he was to be executed as a war criminal ?
+6 1.0 0.96 Who played Lucas McCain on The Rifleman ?
+6 0.96 0.91 What 2th-century fictional character attends Pencey Prep School ?
+6 1.0 0.95 Who started the Dominos Pizza chain ?
+6 1.0 0.95 What Russian maste
+...[truncated 3234 chars]
+
+--- turn 6 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">hi = [q for q in uniq if qc[q]>=60]
+print(len(hi), sum(qc[q] for q in hi))
+print([ (qc[q],q) for q in hi if q not in set(abbr_q)])
+# human: low-confidence ones
+hum_set=set(hum_q)
+low=[q for q in hum_q if res[idx[q]]['human being']<0.9 or ph[q]<0.8]
+print(len(low), sum(qc[q] for q in low))
+for q in sorted(low,key=lambda q:res[idx[q]]['human being'])[:80]:
+    print(qc[q], round(res[idx[q]]['human being'],2), round(ph[q],2), q)
+</parameter>
+</invoke>
+```
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 7 ---
+```python
+abbr_set = set(abbr_q)
+hi = [q for q in uniq if qc[q] >= 60]
+print(len(hi), sum(qc[q] for q in hi))
+for q in hi:
+    if q not in abbr_set:
+        print(qc[q], pred[q], round(pa[q], 2), q)
+hum_set = set(hum_q)
+low = [q for q in hum_q if res[idx[q]]['human being'] < 0.9 or ph[q] < 0.8]
+print(len(low), sum(qc[q] for q in low))
+for q in sorted(low, key=lambda q: res[idx[q]]['human being'])[:80]:
+    print(qc[q], round(res[idx[q]]['human being'], 2), round(ph[q], 2), q)
+```
+OUTPUT:
+81 5195
+65 description and abstract concept 0.7 What does the E stand for in the equation E=mc2 ?
+65 description and abstract concept 0.75 What is HTML ?
+64 description and abstract concept 0.79 What does the `` c '' stand for in the equation E=mc2 ?
+64 description and abstract concept 0.81 What does NN O `` mean when used as a prefix in Irish surnames ?
+64 description and abstract concept 0.18 What does JESSICA mean ?
+65 entity 0.59 What is DEET ?
+121 598
+5 0.39 0.71 What nationality were the 123 people who died in the Black Hole of Calcutta ?
+5 0.4 0.6 What 's the nickname of oddsmaker Jimmy Snyder ?
+5 0.46 0.72 What is a urologist ?
+4 0.47 0.8 What is a courier ?
+5 0.48 0.41 What was Michelangelo 's last name ?
+4 0.48 0.9 Who won the rugby world cup in ?
+5 0.49 0.61 What is the cultural origin of the ceremony of potlatch ?
+5 0.49 0.52 Who was the original Humpty Dumpty ?
+6 0.5 0.82 CNN is owned by whom ?
+6 0.5 0.58 What is Nathan Hamill 's role in the new Star Wars prequel ?
+5 0.51 0.8 What are John C. Calhoun and Henry Clay known as ?
+6 0.51 0.79 Who made the deodorant that claimed that it `` actually builds up resistance to odor '' ?
+4 0.51 0.87 What is the filmmakers collabrative ?
+4 0.52 0.5 What does Esa-Pekka Salonen look like ?
+5 0.53 0.56 What has been the most common Christian name of U.S. presidents ?
+6 0.53 0.28 What 's the middle name of movie producer Joseph E. Levine ?
+6 0.53 0.45 What mythical figure carries an hourglass and a scythe ?
+5 0.54 0.8 What is a neurosurgeon ?
+6 0.55 0.52 What dumb-but-loveable character did Maurice Gosfield play on The Phil Silvers Show ?
+5 0.55 0.51 What fool is not so wise To lose an oath to win a paradise ?
+5 0.55 0.9 Who won the first World Series ?
+5 0.56 0.64 What is Doegs ?
+5 0.57 0.87 What is a biologist ?
+5 0.57 0.85 What is a philanthropist ?
+4 0.57 0.87 Who accompanied Space Ghost on his missions ?
+4 0.57 0.41 What is the last name of Lucy and Linus from the Peanut 's comic strip ?
+5 0.57 0.81 What famous film and TV cowboy lent his name to a fast food chain ?
+4 0.58 0.58 What was Mao 's second name ?
+5 0.58 0.53 What TV character sired a horse named Thunder ?
+5 0.58 0.93 What is the nickname of the famous flyer who mistakenly flew to Ireland instead of to Los Angeles ?
+5 0.59 0.69 Who is the owner of CNN ?
+6 0.59 0.28 What are the top boy names in the U.S. ?
+5 0.59 0.8 Who produces Spumante ?
+4 0.59 0.39 What is Li 'l Abner 's last name ?
+6 0.59 0.52 What TV character said ; `` One of these days , Alice , pow , right in the kisser '' ?
+4 0.6 0.94 Who are cartoondom 's Super Six ?
+5 0.6 0.28 What South African producer had a 1988 profit of $836 million ?
+6 0.61 0.84 Which member of the Micronauts spent 1 years traveling the Microverse in the Marvel comics ?
+6 0.61 0.84 What player squats an average of 3 times during a baseball doubleheader ?
+5 0.64 0.82 Who has won the most Super Bowls ?
+6 0.64 0.94 Who won World War II ?
+4 0.65 0.66 What does the policeman become in the Canadian edition of Monopoly ?
+4 0.65 0.87 What do I call the sons and daughters of my first cousins ?
+4 0.66 0.83 What were Babe Ruth 's Christian names ?
+6 0.67 0.35 What girl 's name is `` Teddy '' an affectionate form of ?
+5 0.67 0.83 What is a geoscientist ?
+5 0.68 0.88 What is a gandy dancer ?
+6 0.69 0.73 What pseudonym did William Sydney Porter use in writing The Gift of the Magi ?
+6 0.69 0.6 What first name was Nipsy Russell given at birth ?
+4 0.69 0.7 What fictional character is known as the `` melancholy Dane '' ?
+5 0.7 0.78 What was Thatcher 's first name ?
+3 0.72 0.93 What is the executor in a will ?
+3 0.72 0.93 What fast-food magnate 's initials graced the left sleeve of the San Diego Padres ' baseball uniforms in 1984 ?
+6 0.72 0.38 Which of the Seven Dwarfs comes first alphabetically ?
+6 0.73 0.7 What TV detective did Craig Stevens play ?
+4 0.74 0.5 What is the most common name ?
+3 0.74 0.91 Who won the Battle of Gettysburg ?
+4 0.74 0.85 What terrorist group was headed by Donald DeFreeze ?
+...[truncated 1508 chars]
+
+--- turn 8 ---
+```python
+nonhum = [q for q in uniq if pred[q] != 'human being']
+cand = [q for q in nonhum if ph[q] > 0.5 or res[idx[q]]['human being'] > 0.3]
+print(len(cand), sum(qc[q] for q in cand))
+for q in sorted(cand, key=lambda q: -res[idx[q]]['human being'])[:120]:
+    print(qc[q], pred[q][:6], round(res[idx[q]]['human being'], 2), round(ph[q], 2), q)
+whoq = [q for q in nonhum if re.match(r'(Who|Whom|Whose)\b', q)]
+print(len(whoq), sum(qc[q] for q in whoq))
+```
+OUTPUT:
+76 480
+4 entity 0.47 0.66 Name the On Stage character whose face was never seen .
+4 entity 0.46 0.76 Who sells Viagra ?
+6 entity 0.45 0.48 What is Dr. Ruth 's last name ?
+5 descri 0.44 0.56 What is the history of Spartacus , the Roman slave and gladiator ?
+5 descri 0.43 0.82 What 's a male `` cuckquean '' ?
+6 entity 0.42 0.61 What are the characters ' names in the Scooby-Doo cartoon ?
+6 entity 0.42 0.65 What party was Winston Churchill a member of ?
+6 entity 0.42 0.87 Who are Woody Woodpecker 's niece and nephew ?
+4 descri 0.42 0.62 Describe the Finnish music personality Salonen 's appearance .
+3 descri 0.4 0.63 What part did John Peter Zenger play in the deveopment of the newspaper in America ?
+5 descri 0.4 0.7 What is a Certified Nurse Midwife ?
+5 entity 0.38 0.44 What famous comic strip character died of acne ?
+3 entity 0.37 0.71 Who claims to have the greatest show on earth ?
+5 entity 0.37 0.85 What star-faring race brought about the Inhumans on Marvel 's Earth ?
+4 entity 0.36 0.43 What was archy , and mehitabel ?
+6 entity 0.36 0.5 What doctor is synonymous with footwear and foot care ?
+6 descri 0.35 0.56 What does Robin Williams do ?
+5 descri 0.34 0.85 What is the origin of the word `` sideburns '' ?
+3 entity 0.34 0.7 Who makes the `` Die Hard '' car battery ?
+4 entity 0.34 0.33 What is the only primate to lack pigment in the palms of its hands ?
+5 descri 0.34 0.87 What does the word affiant mean ?
+5 entity 0.32 0.6 Who owns CNN ?
+5 locati 0.32 0.29 What is the origin of the proverb `` A stitch in time saves nine '' ?
+4 descri 0.31 0.78 What is the origin of the word `` Teddy bear '' ?
+5 entity 0.29 0.55 What little boy and dog live in a shoe ?
+62 abbrev 0.29 0.73 What does A&W of root beer fame stand for ?
+5 entity 0.29 0.71 What is Butterfield 8 in Butterfield 8 ?
+6 entity 0.28 0.83 Who does the advertizing for Frito-Lay ?
+4 entity 0.28 0.85 Who used to make cars with rotary engines ?
+6 descri 0.27 0.65 What part did Benjamin Franklin play in the development of the newspaper in America ?
+5 entity 0.26 0.59 What is the trademark of a Washington Redskin 's fan ?
+5 entity 0.26 0.69 What was the nickname of model Leslie Hornby ?
+4 entity 0.25 0.82 What TV family sometimes buys eclairs from Nelson 's Bakery ?
+5 entity 0.24 0.76 Who markets Spaghetti-o 's ?
+5 entity 0.24 0.6 Who makes chicken `` finger lickin '' good ?
+3 descri 0.24 0.82 What is a `` repeating voter '' ?
+5 entity 0.22 0.55 What university football team did O.J. Simpson take to the Rose Bowl ?
+5 descri 0.22 0.56 What term does a Czech use to describe a Pole ?
+3 entity 0.21 0.53 What kind of a sports team is the Wisconsin Badgers ?
+3 descri 0.19 0.59 What does gringo mean ?
+5 descri 0.17 0.72 What do economists do ?
+4 descri 0.17 0.64 What 's the proud claim to fame of the young women who formed Kappa Alpha Theta ?
+5 locati 0.16 0.57 What is the origin of `` Beauty is in the eye of the beholder '' ?
+6 entity 0.16 0.67 What army was founded by William Booth and his wife Catherine ?
+3 descri 0.14 0.83 How is an executioner determined ?
+5 entity 0.13 0.67 Who provides telephone service in Orange County , California ?
+5 descri 0.11 0.68 Define Sinn Fein .
+5 entity 0.11 0.78 What was organized as a Confederate veterans ' social club in Pulaski , in Tennessee , in 1866 ?
+3 locati 0.1 0.54 What is the origin of the peace symbol ?
+5 entity 0.1 0.62 Who manufactures the software , `` PhotoShop '' ?
+5 descri 0.1 0.54 What is the meaning of Jesus ?
+5 descri 0.09 0.54 What is Betsy Ross famous for ?
+5 descri 0.09 0.54 What is the Amish religion ?
+4 descri 0.09 0.63 What is the origin of the ethnic category `` caucasian '' ?
+5 descri 0.09 0.82 What is a Guild ?
+5 entity 0.09 0.79 What is the Lost Colony ?
+5 descri 0.07 0.57 What is the origin of `` jiggy '' as in getting jiggy with it ?
+5 entity 0.06 0.51 What character did Tex Avery first create upon arriving at MGM ?
+5 descri 0.06 0.6 How do they find or choose witnesses to an execution ?
+5 entity 0.06 0.51 What does a co
+...[truncated 959 chars]
+
+--- turn 9 ---
+```python
+kw = re.compile(r'stand for|abbreviat|acronym|stands for|initials|short for|full form|what does .* mean', re.I)
+lowc = [q for q in uniq if qc[q] < 60]
+k = [q for q in lowc if kw.search(q)]
+print(len(k), sum(qc[q] for q in k))
+for q in k: print(qc[q], pred[q][:6], round(pa[q],2), q)
+print('----- uncertain human rest')
+rest = sorted(low, key=lambda q: res[idx[q]]['human being'])[80:]
+for q in rest: print(qc[q], round(res[idx[q]]['human being'],2), round(ph[q],2), q)
+print('----- cand rest')
+cs = sorted(cand, key=lambda q: -res[idx[q]]['human being'])[60:]
+for q in cs: print(qc[q], pred[q][:6], round(res[idx[q]]['human being'],2), round(ph[q],2), q)
+```
+OUTPUT:
+59 269
+5 descri 0.05 What do the red-and-white stripes on a barbershop pole stand for ?
+3 human  0.61 What fast-food magnate 's initials graced the left sleeve of the San Diego Padres ' baseball uniforms in 1984 ?
+4 descri 0.04 What does the name Kelly mean ?
+5 descri 0.07 What does the name `` Sheri '' mean ?
+4 descri 0.04 What does palindromic mean ?
+5 descri 0.06 What does Melissa mean ?
+5 descri 0.08 What does the name Billie mean ?
+5 descri 0.05 What does the term `` spaghetti western '' mean ?
+4 descri 0.07 What does Aaron mean ?
+3 descri 0.04 What does appropriates money mean ?
+5 descri 0.18 What does Robert mean ?
+4 descri 0.07 What does the word camaro mean , from the GM car the Camaro ?
+5 descri 0.06 What does e=mc2 mean ?
+5 descri 0.06 What does Inuit and Eskimo mean ?
+4 descri 0.06 What does the name ` Alexandra ' mean ?
+4 descri 0.04 What does the term glory hole mean ?
+5 descri 0.08 What does Tiffany mean ?
+5 descri 0.06 What does Venus Retrograde mean ?
+4 descri 0.06 What does `` Janelle '' mean ?
+5 descri 0.11 What does the number 33 on the Rolling Rock beer bottle mean ?
+5 descri 0.05 What does the name Gina mean ?
+5 descri 0.03 What does `` extended definition '' mean and how would one write a paper on it ?
+5 descri 0.04 What does the dot on the letter i mean ?
+5 descri 0.03 What does caliente mean , in English ?
+5 descri 0.06 What does Las Vegas mean ?
+5 descri 0.34 What does the term 3 mean to a newspaper editor ?
+5 descri 0.04 What does the name Melissa mean ?
+5 descri 0.05 What does Elysium mean ?
+3 descri 0.04 What does gringo mean ?
+5 descri 0.05 What does the name Jenna mean ?
+5 descri 0.03 What does it mean `` Rupee Depreciates '' ?
+4 descri 0.06 What does camera-ready art mean ?
+5 descri 0.05 What does a red flag mean in auto racing ?
+4 descri 0.04 What does `` Philebus-like '' mean ?
+4 descri 0.23 What does Ouija mean ?
+5 descri 0.04 What does the name `` Anthony '' mean ?
+3 descri 0.12 What does `` Semper Fidelis '' mean ?
+5 descri 0.18 What does N est-ce pas mean ?
+5 descri 0.23 What does the Latin ante mortem mean ?
+5 descri 0.04 What does the name `` Sabrina '' mean ?
+4 descri 0.04 What does idle mean ?
+5 descri 0.05 What does the word `` opera '' mean ?
+5 descri 0.06 What does `` antidisestablishmentarianism '' mean ?
+5 descri 0.03 What does the word affiant mean ?
+3 descri 0.05 What does the word `` meta '' mean ?
+4 descri 0.03 What does the theory of quantum leaps mean in simpler terms ?
+5 descri 0.03 What does the word terrorism mean ?
+4 descri 0.09 What does the Georgetown `` Hoya '' mean ?
+5 descri 0.08 What does the Greek word polis mean , as in Minneapolis ?
+4 descri 0.08 What does verdandi mean ?
+4 descri 0.04 What does `` saute '' mean ?
+5 descri 0.04 What does seccession mean ?
+5 descri 0.04 What does the name Calder mean ?
+5 descri 0.26 What does `` E Pluribus Unum '' on the penny mean ?
+5 descri 0.06 What does `` intractable plantar keratoma '' mean ?
+4 descri 0.04 What does the name `` Justin '' mean ?
+5 descri 0.14 Why is the word `` abbreviation '' so long ?
+5 descri 0.05 What does storm wave mean in Japanese ?
+5 descri 0.04 What does the name Shawn mean ?
+----- uncertain human rest
+4 0.83 0.92 Who 's the twin brother of the Greek goddess Artemis ?
+5 0.83 0.9 What barroom judge called himself The Law West of the Pecos ?
+6 0.83 0.89 Who made the largest cocaine seizure in Ventura County history ?
+5 0.83 0.89 What are Arnold Palmer 's fans called ?
+4 0.83 0.81 Who bestowed great power upon Captain Britain ?
+6 0.83 0.71 Who has more DNA - a man or a woman ?
+4 0.84 0.89 Who made the musical plea Be True to Your School ?
+5 0.84 0.9 What is a horologist ?
+6 0.84 0.87 Who did Dita Beard work for ?
+5 0.84 0.82 Which sex is twice as likely to contract leprosy ?
+6 0.85 0.81 What TV sitcom character had the maiden name Ethel Potter ?
+3 0.85 0.89 What character narrates Treasure Island ?
+2 0.85 0.77 What were the last names of gangsters Bonnie and Clyde ?
+3 0.85 0.91 Who did Napolean defeat 
+...[truncated 2751 chars]

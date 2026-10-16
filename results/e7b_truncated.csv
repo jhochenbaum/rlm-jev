@@ -1,0 +1,4 @@
+id,book_words,kept_words,kept_share,trunc_ok
+106,560303,483870,0.864,True
+107,560303,483870,0.864,False
+109,560303,483870,0.864,True

@@ -1,0 +1,30 @@
+{
+ "trec10": {
+  "in_pool_n": 10,
+  "in_pool_acc": 1.0,
+  "out_pool_n": 490,
+  "out_pool_acc": 0.9081632653061225
+ },
+ "weights": {
+  "description and abstract concept": 0.1,
+  "entity": 0.25,
+  "human being": 2.0,
+  "numeric value": 1.0,
+  "location": 1.0,
+  "abbreviation": 1.0
+ },
+ "unweighted": {
+  "heldout_n": 3851,
+  "record_acc": 0.945468709426123,
+  "count_relerr": 0.07889454828770354,
+  "oolong_overall": 0.7459166756635646,
+  "oolong_131k": 0.7121522200810229
+ },
+ "weighted": {
+  "heldout_n": 3851,
+  "record_acc": 0.9584523500389509,
+  "count_relerr": 0.026083805081613134,
+  "oolong_overall": 0.8078803202504857,
+  "oolong_131k": 0.6867797393290855
+ }
+}

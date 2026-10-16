@@ -1,0 +1,139 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'location'? Give your final answer in the form 'Answer: human being is [X] location', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<python>
+print(context[:1500])
+print(context[-500:])
+</python>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print(context[-500:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines = [l for l in context.split("\n") if "|| Instance:" in l]
+qs = [l.split("|| Instance:",1)[1].strip() for l in lines]
+print(len(qs), qs[:3])
+cats = ['description and abstract concept','numeric value','entity','abbreviation','human being','location']
+def mk(batch):
+    s = ("Classify each question by the category of its answer (TREC-style): "
+         "A=description and abstract concept, B=numeric value, C=entity, D=abbreviation, E=human being, F=location.\n"
+         "Reply with exactly one line per question in format 'index:letter', nothing else.\n\n")
+    s += "\n".join(f"{i}: {q}" for i,q in enumerate(batch))
+    return s
+test = llm_query(mk(qs[:20]))
+print(test)
+```
+OUTPUT:
+25531 ['What country claimed Rubens , Van Dyck and Bruegel as citizens ?', "What actress 's autobiography is titled Shelley : Also Known as Shirley ?", 'What does the E stand for in the equation E=mc2 ?']
+0:C
+1:E
+2:D
+3:C
+4:E
+5:E
+6:B
+7:B
+8:E
+9:F
+10:A
+11:A
+12:B
+13:D
+14:D
+15:A
+16:C
+17:D
+18:D
+19:F
+
+
+--- turn 3 ---
+```python
+import re, collections
+letters = dict(zip("ABCDEF", cats))
+batches = [qs[i:i+150] for i in range(0, len(qs), 150)]
+results = [None]*len(batches)
+def parse(out, n):
+    d = {}
+    for m in re.finditer(r'(\d+)\s*:\s*([A-F])', out):
+        d[int(m.group(1))] = m.group(2)
+    return [d.get(i) for i in range(n)]
+import time
+t=time.time()
+for s in range(0, len(batches), 8):
+    idx = list(range(s, min(s+8, len(batches))))
+    outs = llm_query_batched([mk(batches[i]) for i in idx])
+    for i,o in zip(idx, outs):
+        results[i] = parse(o, len(batches[i]))
+    if time.time()-t > 240: 
+        print("stopped at", s+8); break
+done = [r for r in results if r is not None]
+print(len(done), len(batches))
+flat = [x for r in done for x in r]
+print(collections.Counter(flat))
+```
+OUTPUT:
+stopped at 96
+96 171
+Counter({'D': 2846, 'E': 2818, 'A': 2596, 'C': 2105, 'F': 2094, 'B': 1941})
+
+
+--- turn 4 ---
+```python
+t=time.time()
+for s in range(96, len(batches), 8):
+    idx = list(range(s, min(s+8, len(batches))))
+    outs = llm_query_batched([mk(batches[i]) for i in idx])
+    for i,o in zip(idx, outs):
+        results[i] = parse(o, len(batches[i]))
+    if time.time()-t > 240:
+        print("stopped at", s+8); break
+done = [r for r in results if r is not None]
+print(len(done), len(batches))
+flat = [x for r in done for x in r]
+print(collections.Counter(flat))
+```
+OUTPUT:
+171 171
+Counter({'D': 5021, 'E': 5006, 'A': 4484, 'C': 3785, 'F': 3747, 'B': 3488})
+
+
+--- turn 5 ---
+```python
+FINAL("Answer: human being is more common than location")
+```
+FINAL: Answer: human being is more common than location

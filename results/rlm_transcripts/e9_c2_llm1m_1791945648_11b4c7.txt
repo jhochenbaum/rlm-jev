@@ -1,0 +1,134 @@
+Query: In the above data, is label 'abbreviation' more common, less common, or the same frequency as label 'location'? Give your final answer in the form 'Answer: abbreviation is [X] location', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500]); print(context[-500:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print(context[-500:])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines = [l for l in context.split("\n") if l.startswith("Date:") and "Instance:" in l]
+qs = [l.split("Instance:",1)[1].strip() for l in lines]
+print(len(qs))
+def mk(chunk):
+    s = "Classify each question by the type of its answer into exactly one of: DESC (description and abstract concept), NUM (numeric value), ENTY (entity), ABBR (abbreviation), HUM (human being), LOC (location). Output one line per question in format 'index:LABEL' and nothing else.\n\n"
+    return s + "\n".join(f"{i}: {q}" for i,q in chunk)
+test = mk(list(enumerate(qs[:5])))
+print(llm_query(test))
+```
+OUTPUT:
+25531
+0:LOC
+1:HUM
+2:ABBR
+3:ENTY
+4:HUM
+
+
+--- turn 3 ---
+```python
+import re
+from collections import Counter
+chunks = []
+size = 200
+for s in range(0, len(qs), size):
+    chunks.append(list(enumerate(qs[s:s+size])))
+prompts = [mk(c) for c in chunks]
+results = []
+for i in range(0, len(prompts), 8):
+    results += llm_query_batched(prompts[i:i+8])
+cnt = Counter()
+for r in results:
+    for line in r.split("\n"):
+        m = re.match(r"\s*\d+\s*:\s*([A-Z]+)", line)
+        if m:
+            cnt[m.group(1)] += 1
+print(cnt, sum(cnt.values()))
+```
+OUTPUT:
+Counter({'ABBR': 5006, 'HUM': 4986, 'DESC': 4487, 'LOC': 3923, 'ENTY': 3624, 'NUM': 3505}) 25531
+
+
+--- turn 4 ---
+```python
+import random
+lab = {}
+for ci, r in enumerate(results):
+    for line in r.split("\n"):
+        m = re.match(r"\s*(\d+)\s*:\s*([A-Z]+)", line)
+        if m:
+            lab[ci*size+int(m.group(1))] = m.group(2)
+ab = [i for i,l in lab.items() if l=="ABBR"]
+random.seed(1)
+for i in random.sample(ab, 25):
+    print(i, qs[i])
+```
+OUTPUT:
+5482 What is the abbreviation for micro ?
+23806 What does MSG stand for ?
+2609 What is the acronym for the rating system for air conditioner efficiency ?
+10574 What does IOC stand for ?
+4839 What does the abbreviation cwt. ?
+20531 What is SVHS ?
+18587 What does CPR stand for ?
+19545 What does BMW stand for ?
+15681 What does snafu stand for ?
+8541 What is BPH ?
+3812 What does G.M.T. stand for ?
+20219 What is the full name of the PLO ?
+1234 What is the abbreviation of the company name ` General Motors ' ?
+16147 What is BPH ?
+17906 What does SIDS stand for ?
+25360 What 's the abbreviation for limited partnership ?
+81 What is the full form of .com ?
+18417 What is the full name of the PLO ?
+11020 What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+9309 What does INRI stand for when used on Jesus ' cross ?
+24630 What does LOL mean ?
+4160 What is HDLC ?
+13084 What does R.E.M. stand for , as in the rock group R.E.M. ?
+1318 What is the acronym for the rating system for air conditioner efficiency ?
+938 What is AFS ?
+
+
+--- turn 5 ---
+```python
+FINAL("Answer: abbreviation is more common than location")
+```
+FINAL: Answer: abbreviation is more common than location

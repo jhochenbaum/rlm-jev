@@ -1,0 +1,294 @@
+Query: In the above data, which of the labels is the least common? Give your final answer in the form 'Label: answer' where answer is one of the labels: numeric value, entity, human being, location, abbreviation, description and abstract concept.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</br>```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+....
+s BPH ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+3191
+
+
+--- turn 2 ---
+```python
+import re
+data = [l for l in lines if l.startswith('Date:') and 'Instance:' in l]
+qs = [l.split('Instance:',1)[1].strip() for l in data]
+print(len(qs))
+
+labels = ['numeric value','entity','human being','location','abbreviation','description and abstract concept']
+chunk = 60
+chunks = [qs[i:i+chunk] for i in range(0,len(qs),chunk)]
+
+def mkprompt(ch):
+    s = ("Classify each question by the type of its answer into exactly one of these categories:\n"
+         "A = numeric value (numbers, dates, money, counts, distances, etc.)\n"
+         "B = entity (animals, food, products, objects, events, languages, colors, etc.)\n"
+         "C = human being (a person or group of people/organization)\n"
+         "D = location (countries, cities, places)\n"
+         "E = abbreviation (abbreviation or what it stands for)\n"
+         "F = description and abstract concept (definitions, reasons, manner, descriptions)\n\n"
+         "Return exactly one line per question in the format '<number>: <letter>' and nothing else.\n\n")
+    for i,q in enumerate(ch,1):
+        s += f"{i}. {q}\n"
+    return s
+
+prompts = [mkprompt(c) for c in chunks]
+results = []
+for i in range(0,len(prompts),8):
+    results += llm_query_batched(prompts[i:i+8])
+print(len(results))
+print(results[0][:300])
+```
+OUTPUT:
+3182
+54
+1: F
+2: C
+3: C
+4: F
+5: E
+6: C
+7: E
+8: E
+9: D
+10: D
+11: C
+12: C
+13: F
+14: A
+15: A
+16: A
+17: A
+18: A
+19: B
+20: A
+21: F
+22: F
+23: D
+24: C
+25: B
+26: F
+27: C
+28: F
+29: C
+30: F
+31: F
+32: A
+33: C
+34: C
+35: B
+36: F
+37: B
+38: B
+39: F
+40: F
+41: F
+42: F
+43: C
+44: D
+45: F
+46: B
+47: F
+48: D
+49: D
+50: E
+51: C
+52:
+
+
+--- turn 3 ---
+```python
+import re
+from collections import Counter
+m = {'A':'numeric value','B':'entity','C':'human being','D':'location','E':'abbreviation','F':'description and abstract concept'}
+preds = []
+bad = 0
+for ch, r in zip(chunks, results):
+    d = {}
+    for line in r.split('\n'):
+        mm = re.match(r'\s*(\d+)\s*[:.]\s*([A-F])', line)
+        if mm:
+            d[int(mm.group(1))] = mm.group(2)
+    for i in range(1, len(ch)+1):
+        if i in d:
+            preds.append(d[i])
+        else:
+            preds.append(None); bad += 1
+print(len(preds), bad)
+cnt = Counter(preds)
+print({m.get(k,k): v for k,v in cnt.items()})
+```
+OUTPUT:
+3182 0
+{'description and abstract concept': 553, 'human being': 555, 'abbreviation': 557, 'location': 529, 'numeric value': 401, 'entity': 587}
+
+
+--- turn 4 ---
+```python
+kw = re.compile(r'stand for|abbreviat|acronym|stands for|initials', re.I)
+E_idx = [i for i,p in enumerate(preds) if p=='E']
+kw_idx = [i for i,q in enumerate(qs) if kw.search(q)]
+print(len(E_idx), len(kw_idx), len(set(E_idx)&set(kw_idx)))
+import random
+random.seed(1)
+for i in random.sample([i for i in E_idx if i not in set(kw_idx)], 25):
+    print(qs[i])
+```
+OUTPUT:
+557 426 422
+What is SVHS ?
+What does LOL mean ?
+What is LMDS ?
+What does LOL mean ?
+What is the full form of .com ?
+What is HDLC ?
+What is SAP ?
+What is LMDS ?
+What does the word LASER mean ?
+What is HTML ?
+What does `` B.Y.O.B. '' mean ?
+What is the full name of the PLO ?
+What is SAP ?
+What does BTU mean ?
+What does the word LASER mean ?
+What does `` B.Y.O.B. '' mean ?
+What is DSL ?
+What is LMDS ?
+What does the word LASER mean ?
+In a computer , what does SCSI mean ?
+What is SVHS ?
+What is the full name of the PLO ?
+What does `` B.Y.O.B. '' mean ?
+What is BPH ?
+What is LMDS ?
+
+
+--- turn 5 ---
+```python
+numkw = re.compile(r'^(how (many|much|long|far|old|tall|big|high|fast|large|often)|what year|when |what (is|was) the (population|height|temperature|date|number|cost|price|speed|age|distance|length|weight)|what percentage|how)', re.I)
+miss = [i for i,q in enumerate(qs) if numkw.search(q.strip()) and preds[i]!='A']
+hit = [i for i,q in enumerate(qs) if numkw.search(q.strip()) and preds[i]=='A']
+print(len(miss), len(hit))
+for i in miss[:40]:
+    print(preds[i], qs[i])
+```
+OUTPUT:
+135 306
+F How did Asia get its name ?
+F How is the word ` qigong ' pronounced ?
+F How do boats float ?
+F How do I do this ?
+F How do you identify prime numbers ?
+F How is the election of a new Pope announced to the world ?
+F How did the months of the year get there name ?
+F How was the ACLU formed ?
+F How effective are condoms in protecting against AIDS ?
+F How can I call a friend in another country when I do not know the telephone number ?
+F How do storms form ?
+F How come light bulbs go out ?
+F How is the new Ford Econoline van F25 V1 engine ?
+F How do you ask a total stranger out on a date ?
+F How do you make a million bucks ?
+F How do I find out the exact time of a sunset for a particular day ?
+F How do you make panoramic sugar eggs for Easter - the ones with the scene inside ?
+F How does a rainbow form ?
+F How do you do a bibliography page ?
+E When reading classified ads , what does EENTY : other stand for ?
+F How did the bikini bathing suite get its name ?
+F How do you recognize anorexia ?
+F How come a doughnut has a hole in it ?
+F How is it correct to say ` qigong ' ?
+F How would I find the price of different organs that have been donated ?
+F How do you exterminate bees that are in the walls of your home ? Will bee eggs remain over winter ?
+F How do I find out about jobs ?
+F How do you look up criminal records on the Internet ?
+F How do I impress a guy ?
+F How does ultraviolet light damage the DNA of skin cells ?
+F How do birds have sex ?
+F How did the 7th inning stretch get started ?
+F How is a hydrogen bomb different from a nuclear bomb ?
+F How does a hydroelectric dam work ?
+F How can I determine the radius of an ellipse ?
+F How do telephones work ?
+F How do you do a bibliography with an unknown author ?
+F How do you write a book report ?
+F How do I install a tile floor ?
+F How did names come about ?
+
+
+--- turn 6 ---
+```python
+excl = re.compile(r'^how (do|did|does|is|was|can|come|would|should|are|to)\b', re.I)
+miss2 = [i for i in miss if not excl.search(qs[i].strip())]
+print(len(miss2))
+for i in miss2[:40]:
+    print(preds[i], qs[i])
+print(Counter(preds))
+```
+OUTPUT:
+8
+F How effective are condoms in protecting against AIDS ?
+E When reading classified ads , what does EENTY : other stand for ?
+E When reading classified ads , what does EENTY : other stand for ?
+E When reading classified ads , what does EENTY : other stand for ?
+E When reading classified ads , what does EENTY : other stand for ?
+D When Superman needs to get away from it all , where does he go ?
+E When reading classified ads , what does EENTY : other stand for ?
+E When reading classified ads , what does EENTY : other stand for ?
+Counter({'B': 587, 'E': 557, 'C': 555, 'F': 553, 'D': 529, 'A': 401})
+
+
+--- turn 7 ---
+```python
+FINAL("Label: numeric value")
+```
+FINAL: Label: numeric value

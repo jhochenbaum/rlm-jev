@@ -1,0 +1,256 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</br>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+....
+s BPH ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+3191
+
+
+--- turn 2 ---
+```python
+import re
+items = []
+for l in lines:
+    m = re.match(r'^Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m:
+        items.append(m.group(1))
+print(len(items), len(set(items)))
+
+labels = {
+ 'numeric value': 'answer is a number, count, date, money, size, duration, percentage, etc.',
+ 'entity': 'answer is a thing: animal, food, product, body part, color, sport, creative work, event, substance, language, vehicle, etc. (not a person or place)',
+ 'human being': 'answer is a person, a group of people, or an organization of people',
+ 'location': 'answer is a place: city, country, state, mountain, river, address, etc.',
+ 'abbreviation': 'answer is an abbreviation or its expansion',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+uniq = list(set(items))
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question fall into?")
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+from collections import Counter
+c = Counter(pred[q] for q in items)
+print(c)
+```
+OUTPUT:
+3182 2692
+Counter({'entity': 633, 'description and abstract concept': 554, 'location': 539, 'abbreviation': 533, 'human being': 519, 'numeric value': 404})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(1)
+abbr = [q for q in uniq if pred[q]=='abbreviation']
+for q in random.sample(abbr, 25):
+    print(q)
+```
+OUTPUT:
+What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+What is LMDS ?
+What is RAM in the computer ?
+What does CNN stand for ?
+What is the abbreviation for Original Equipment Manufacturer ?
+What does NASA stand for ?
+What does R.E.M. stand for , as in the rock group R.E.M. ?
+In a computer , what does SCSI mean ?
+What is the abbreviated term used for the National Bureau of Investigation ?
+What 's the abbreviation for trinitrotoluene ?
+What does the abbreviation OAS stand for ?
+What does U.S.S.R. stand for ?
+What does the word LASER mean ?
+What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+CNN is the abbreviation for what ?
+What is DSL ?
+What does IOC stand for ?
+What does BMW stand for ?
+What does INRI stand for when used on Jesus ' cross ?
+What does pH stand for ?
+What is HDLC ?
+What does NASDAQ stand for ?
+What does LOL mean ?
+What does IQ stand for ?
+When reading classified ads , what does EENTY : other stand for ?
+
+
+--- turn 4 ---
+```python
+random.seed(2)
+ent = [q for q in uniq if pred[q]=='entity']
+for q in random.sample(ent, 30):
+    r = res[uniq.index(q)]
+    print(round(r['entity'],2), q)
+
+# borderline count
+border = [q for q, r in zip(uniq, res) if sorted(r.values())[-1] < 0.6]
+print(len(border), len(uniq))
+```
+OUTPUT:
+1.0 Who was the first animal into space ?
+0.89 In what Olympic Games did Nadia Comaneci become popular ?
+0.99 What is Dudley Do-Right 's horse 's name ?
+0.97 What did the forward-thinking Simon Brothers Bakery of Chicago insert into bagels to boost business ?
+1.0 Which magazine is `` fine entertainment for men '' ?
+0.78 What was the nickname of German flying ace Manfred von Richthofen ?
+0.99 What 's the U.S. Navy hymn ?
+0.7 What is the term for a group of geese ?
+0.91 What is the celtic symbol for `` life '' ?
+0.95 What did Walter Huston remove to perform in the movie The Treasure of the Sierra Madre ?
+1.0 Madonna hocks which soft drink ?
+0.99 What plants are found in an estuary ?
+0.68 What was a California prayer book to an Old West gambler ?
+1.0 What sport features slotbacks , tailbacks , and touchbacks ?
+1.0 What ship did Lloyd M. Bucher command ?
+1.0 What product did William Horlick discover and produce ?
+0.78 What sign is The Water Carrier the zodiacal symbol for ?
+1.0 What rabbit got its name because its ears resembled those of a jackass ?
+0.49 What is the state nickname of Mississippi ?
+0.95 What is `` the only cigarette made with no leftovers '' ?
+0.99 What joins white wine to put the spritz in a Spritzer ?
+0.98 What animals can live the longest without food ?
+1.0 What novel inspired the movie BladeRunner ?
+0.97 What 's the International Lawn Tennis Challenge Trophy usually called ?
+0.98 What document did President Andrew Johnson want a copy of placed under his head upon his burial ?
+1.0 Jude Law was in what movie ?
+1.0 What species was Winnie the Pooh ?
+0.5 What are snowballs to a hot-rodder ?
+1.0 What animal do buffalo wings come from ?
+0.59 What kind of a sports team is the Wisconsin Badgers ?
+130 2692
+
+
+--- turn 5 ---
+```python
+labels2 = {
+ 'numeric value': 'question asks for a number, quantity, date, year, price, distance, speed, age, or other numeric amount',
+ 'entity': 'question asks for a specific thing or named item: animal, plant, food, drink, product, brand, vehicle, sport, instrument, color, body part, disease, language, work of art, book, movie, event, word, or substance',
+ 'human being': 'question asks who a person is, or which group, team, nationality, or organization of people',
+ 'location': 'question asks where something is, or for a city, country, state, river, mountain, or other place',
+ 'abbreviation': 'question asks what an abbreviation, acronym, or initialism stands for or means',
+ 'description and abstract concept': 'question asks for a definition, description, explanation, reason, method, meaning, or other abstract concept',
+}
+res2 = jev_classify(uniq, labels2, instruction="Classify the type of answer this trivia question expects.")
+avg = []
+for r1, r2 in zip(res, res2):
+    avg.append({k: (r1[k] + r2[k]) / 2 for k in labels})
+pred2 = {q: max(r, key=r.get) for q, r in zip(uniq, avg)}
+c2 = Counter(pred2[q] for q in items)
+print(c2)
+diff = [q for q in uniq if pred[q] != pred2[q]]
+print(len(diff))
+print(sum(1 for q in items if (pred[q]=='entity') != (pred2[q]=='entity')))
+random.seed(3)
+for q in random.sample(diff, min(25, len(diff))):
+    print(pred[q], '->', pred2[q], '|', q)
+```
+OUTPUT:
+Counter({'entity': 651, 'description and abstract concept': 554, 'abbreviation': 546, 'location': 527, 'human being': 503, 'numeric value': 401})
+94
+86
+entity -> description and abstract concept | What is ethylene ?
+location -> description and abstract concept | What was spawned the term `` MiG Alley '' ?
+description and abstract concept -> entity | What 's the motto of the Boy Scouts ?
+entity -> description and abstract concept | What is a cake of soap ?
+description and abstract concept -> entity | What 's new in the postal world in 1999 ?
+human being -> entity | What is the most common name ?
+description and abstract concept -> entity | What is her profession ?
+description and abstract concept -> abbreviation | What does the `` c '' stand for in the equation E=mc2 ?
+human being -> entity | What are the characters ' names in the Scooby-Doo cartoon ?
+entity -> location | Where are good science sites on the Internet ?
+description and abstract concept -> entity | What 's the state motto of California ?
+location -> entity | What is the US Federal Government website for Standard Industrial Classification codes , SIC , ?
+human being -> description and abstract concept | What is a geoscientist ?
+entity -> description and abstract concept | What was the Long March in China ?
+human being -> entity | What was archy , and mehitabel ?
+location -> entity | What is the largest shopping mall in the world ?
+human being -> entity | What TV detective did Craig Stevens play ?
+description and abstract concept -> entity | What did n't Rocky Marciano do in his pro boxing career ?
+human being -> entity | What pseudonym did William Sydney Porter use in writing The Gift of the Magi ?
+description and abstract concept -> entity | What was the verdict in the 1925 trial of John T. Scopes ?
+entity -> description and abstract concept | What is dry ice ?
+entity -> abbreviation | What is DEET ?
+location -> entity | What 's the most common street name in America ?
+description and abstract concept -> entity | What is Larry King 's occupation ?
+description and abstract concept -> entity | What is the Motto for the State of Maryland ?
+
+
+--- turn 6 ---
+```python
+yn = jev_yesno(uniq, "Is the answer to this question a specific thing (an animal, food, product, object, creative work, event, substance, language, sport, color, body part, word, symbol, motto, etc.) rather than a person, place, number, abbreviation, or a description/definition?")
+ynd = dict(zip(uniq, yn))
+for t in [0.4,0.5,0.6,0.7]:
+    print(t, sum(1 for q in items if ynd[q] > t))
+# combined: avg entity prob of three signals
+ent_avg = {q: (r1['entity'] + r2['entity'] + ynd[q]) / 3 for q, r1, r2 in zip(uniq, res, res2)}
+for t in [0.4,0.45,0.5]:
+    print('comb', t, sum(1 for q in items if ent_avg[q] > t))
+# agreement of argmax ensemble with yes/no
+print(sum(1 for q in items if (pred2[q]=='entity') == (ynd[q] > 0.5)))
+```
+OUTPUT:
+0.4 718
+0.5 656
+0.6 588
+0.7 501
+comb 0.4 687
+comb 0.45 658
+comb 0.5 630
+2987
+
+
+--- turn 7 ---
+```python
+FINAL("Answer: 651")
+```
+FINAL: Answer: 651

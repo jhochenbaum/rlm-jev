@@ -1,0 +1,70 @@
+Query: In the above data, which of the labels is the most common? Give your final answer in the form 'Label: answer' where answer is one of the labels: description and abstract concept, entity, human being, numeric value, location, abbreviation.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('----')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+----
+d for ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+3191
+
+
+--- turn 1 ---
+```python
+import re
+qs=[l.split('Instance: ',1)[1] for l in context.split('\n') if l.startswith('Date:') and 'Instance: ' in l]
+print(len(qs))
+codes={'D':'description and abstract concept','E':'entity','H':'human being','N':'numeric value','L':'location','A':'abbreviation'}
+def mk(chunk,start):
+    s="Classify each question by the type of its answer: D=description/abstract concept (definitions, reasons, manner), E=entity (things, animals, foods, products, etc.), H=human being (person, group, org), N=numeric value (count, date, money, etc.), L=location, A=abbreviation.\nReply with one line per question in the form 'number: letter' only.\n\n"
+    return s+"\n".join(f"{start+i}: {q}" for i,q in enumerate(chunk))
+size=80
+chunks=[(i,qs[i:i+size]) for i in range(0,len(qs),size)]
+prompts=[mk(c,i) for i,c in chunks]
+res=[]
+for b in range(0,len(prompts),8):
+    res+=llm_query_batched(prompts[b:b+8])
+from collections import Counter
+cnt=Counter(); got=0
+for r in res:
+    for m in re.finditer(r'(\d+)\s*:\s*([DEHNLA])\b',r):
+        cnt[m.group(2)]+=1; got+=1
+print(got,cnt)
+```
+OUTPUT:
+3182
+3182 Counter({'N': 965, 'E': 769, 'H': 465, 'L': 342, 'D': 337, 'A': 304})
+
+
+--- turn 2 ---
+```python
+FINAL("Label: numeric value")
+```
+FINAL: Label: numeric value

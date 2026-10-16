@@ -1,0 +1,247 @@
+Query: In the above data, is label 'location' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: location is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 76,803 characters (~19,200 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[5:15])
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 29, 2022 || User: 44436 || Instance: What does IOC stand for ?
+Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?
+Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?
+Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?
+Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?
+Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .
+Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?
+Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?
+Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?
+Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?
+Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?
+Date: May 01, 2024 || User: 
+796
+['Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?', 'Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?', 'Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?', 'Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?', 'Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .', 'Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?', 'Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?', 'Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?', 'Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?', 'Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?']
+
+
+--- turn 1 ---
+```python
+import re
+inst = [l.split("Instance: ",1)[1] for l in context.split("\n") if "|| Instance: " in l]
+print(len(inst))
+cats = ['location','numeric value','description and abstract concept','abbreviation','human being','entity']
+def mk(chunk, start):
+    qs = "\n".join(f"{start+i}. {q}" for i,q in enumerate(chunk))
+    return ("Classify each question by the type of its answer into exactly one of these categories: "
+            "'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n"
+            "(abbreviation = answer is an abbreviation or expansion of one; entity = things, animals, products, foods, etc.; "
+            "description and abstract concept = definitions, reasons, manner; human being = person/group; location = place; numeric value = number, date, money, count.)\n"
+            "Reply with one line per question in the format '<number>: <category>' and nothing else.\n\n" + qs)
+size = 50
+chunks = [(i, inst[i:i+size]) for i in range(0, len(inst), size)]
+prompts = [mk(c, s) for s, c in chunks]
+res = []
+for i in range(0, len(prompts), 8):
+    res += llm_query_batched(prompts[i:i+8])
+labels = {}
+for r in res:
+    for m in re.finditer(r"(\d+)\s*:\s*(location|numeric value|description and abstract concept|abbreviation|human being|entity)", r):
+        labels[int(m.group(1))] = m.group(2)
+print(len(labels))
+from collections import Counter
+cnt = Counter(labels.values())
+print(cnt)
+```
+OUTPUT:
+787
+787
+Counter({'abbreviation': 168, 'numeric value': 155, 'description and abstract concept': 132, 'location': 125, 'human being': 122, 'entity': 85})
+
+
+--- turn 2 ---
+```python
+abbr = [inst[i] for i in range(len(inst)) if labels.get(i) == 'abbreviation']
+print(len(abbr))
+for q in abbr[:60]:
+    print(q)
+```
+OUTPUT:
+168
+What does IOC stand for ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What does IBM stand for ?
+What is LMDS ?
+What does BTU mean ?
+CPR is the abbreviation for what ?
+What does NAFTA stand for ?
+What is IOC an abbreviation of ?
+What is HTML ?
+What does RCA stand for ?
+What is HDLC ?
+What is the abbreviation for micro ?
+What is AFS ?
+What does the abbreviation OAS stand for ?
+What is the abbreviation of the National Bureau of Investigation ?
+What is the abbreviation of the National Bureau of Investigation ?
+What does U.S.S.R. stand for ?
+What does the `` c '' stand for in the equation E=mc2 ?
+What does R.E.M. stand for , as in the rock group R.E.M. ?
+What does the channel ESPN stand for ?
+What is DSL ?
+What does CNN stand for ?
+What does HIV stand for ?
+CNN is the abbreviation for what ?
+What is SVHS ?
+What does LOL mean ?
+What does `` B.Y.O.B. '' mean ?
+What 's the abbreviation for trinitrotoluene ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does BUD stand for ?
+What 's the abbreviation for trinitrotoluene ?
+What does the E stand for in the equation E=mc2 ?
+What does VCR stand for ?
+What does NASDAQ stand for ?
+What is DTMF ?
+What is the abbreviated term used for the National Bureau of Investigation ?
+What does pH stand for ?
+What is p.m. an abbreviation for , as in 5 p.m. ?
+What does the word LASER mean ?
+What does S.O.S. stand for ?
+What does the `` c '' stand for in the equation E=mc2 ?
+What does EKG stand for ?
+What does CPR stand for ?
+What is RAM in the computer ?
+CNN is an acronym for what ?
+What does NASA stand for ?
+What does IQ stand for ?
+What does INRI stand for when used on Jesus ' cross ?
+What does the E stand for in the equation E=mc2 ?
+What does the channel ESPN stand for ?
+What does e.g. stand for ?
+What is RAM in the computer ?
+What is DSL ?
+In a computer , what does SCSI mean ?
+What does G.M.T. stand for ?
+What does e.g. stand for ?
+What does the abbreviation OAS stand for ?
+What does NAFTA stand for ?
+What does U.S.S.R. stand for ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+
+
+--- turn 3 ---
+```python
+for q in abbr[60:]:
+    print(q)
+```
+OUTPUT:
+What is the abbreviation of the International Olympic Committee ?
+What does SHIELD stand for ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+What does VCR stand for ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What does S.O.S. stand for ?
+What 's the abbreviation for limited partnership ?
+What does VCR stand for ?
+What is the correct way to abbreviate cc. at the bottom of a business letter ?
+What is the full name of the PLO ?
+What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+What does A&W of root beer fame stand for ?
+What does BMW stand for ?
+What does R.E.M. stand for , as in the rock group R.E.M. ?
+What does G.M.T. stand for ?
+What is the acronym for the National Bureau of Investigation ?
+What does the abbreviation OAS stand for ?
+What is p.m. an abbreviation for , as in 5 p.m. ?
+What does snafu stand for ?
+What does the abbreviation IOC stand for ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What is RCD ?
+What does LOL mean ?
+What is DTMF ?
+What is the abbreviation for micro ?
+What does NAFTA stand for ?
+When reading classified ads , what does EENTY : other stand for ?
+What is HDLC ?
+What does the abbreviation cwt. ?
+What is the abbreviation of the company name ` General Motors ' ?
+What is SAP ?
+What does SHIELD stand for ?
+What does ` PSI ' stand for ?
+What does the abbreviation IOC stand for ?
+What does Ms. , Miss , and Mrs. stand for ?
+What is BPH ?
+What does IBM stand for ?
+What does Ms. , Miss , and Mrs. stand for ?
+CNN is an acronym for what ?
+What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+What does the abbreviation AIDS stand for ?
+What is LMDS ?
+What does the abbreviation cwt. ?
+In a computer , what does SCSI mean ?
+What does A&W of root beer fame stand for ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+What is the abbreviation for Original Equipment Manufacturer ?
+What is the full form of .com ?
+What is the abbreviation of the National Bureau of Investigation ?
+What is the abbreviation of the company name ` General Motors ' ?
+What is the abbreviation of General Motors ?
+What is p.m. an abbreviation for , as in 5 p.m. ?
+What is HTML ?
+What does SIDS stand for ?
+What is the abbreviation for micro ?
+What does RCA stand for ?
+What is AFS ?
+What does IQ stand for ?
+What does the abbreviation AIDS stand for ?
+What is the abbreviation of the International Olympic Committee ?
+What does pH stand for ?
+CNN is the abbreviation for what ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What is the acronym for the National Bureau of Investigation ?
+What does MSG stand for ?
+When reading classified ads , what does EENTY : other stand for ?
+What does the channel ESPN stand for ?
+What does snafu stand for ?
+What is RCD ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+What does INRI stand for when used on Jesus ' cross ?
+What does S.O.S. stand for ?
+What does the word LASER mean ?
+What does the acronym CPR mean ?
+What does SIDS stand for ?
+What does RCA stand for ?
+What is the full form of .com ?
+What is the abbreviated term used for the National Bureau of Investigation ?
+CNN is the abbreviation for what ?
+What does the acronym CPR mean ?
+What does NASDAQ stand for ?
+What is the acronym for the rating system for air conditioner efficiency ?
+What does the abbreviation AIDS stand for ?
+What does CPR stand for ?
+What is the abbreviation for Original Equipment Manufacturer ?
+What does NASA stand for ?
+What is AFS ?
+What 's the abbreviation for limited partnership ?
+What does the `` c '' stand for in the equation E=mc2 ?
+What is the acronym for the National Bureau of Investigation ?
+What does IOC stand for ?
+What does BTU mean ?
+What is the acronym for the rating system for air conditioner efficiency ?
+What is the abbreviation of General Motors ?
+What is 
+...[truncated 511 chars]
+
+--- turn 4 ---
+```python
+FINAL("Answer: location is less common than abbreviation")
+```
+FINAL: Answer: location is less common than abbreviation

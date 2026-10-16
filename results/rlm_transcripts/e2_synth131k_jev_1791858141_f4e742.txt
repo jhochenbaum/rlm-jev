@@ -1,0 +1,204 @@
+Query: In the above data, which of the labels is the least common? Give your final answer in the form 'Label: answer' where answer is one of the labels: numeric value, entity, human being, location, abbreviation, description and abstract concept.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-5:])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+3191
+["Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m: qs.append(m.group(1))
+print(len(qs))
+labels = {
+ 'numeric value': 'answer is a number, date, count, amount, measurement, percentage, duration, etc.',
+ 'entity': 'answer is a thing: animal, food, product, body part, color, sport, object, creature, substance, event, language, etc.',
+ 'human being': 'answer is a person, group of people, or an organization of people / individual',
+ 'location': 'answer is a place: country, city, state, mountain, river, address, etc.',
+ 'abbreviation': 'answer is an abbreviation or acronym or what it stands for / expansion',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, explanation, or abstract concept',
+}
+uniq = list(dict.fromkeys(qs))
+res = jev_classify(uniq, labels, instruction="What type of answer does this question expect?")
+from collections import Counter
+mp = dict(zip(uniq, res))
+c = Counter(max(mp[q], key=mp[q].get) for q in qs)
+print(c)
+```
+OUTPUT:
+3182
+Counter({'entity': 619, 'description and abstract concept': 591, 'abbreviation': 540, 'location': 532, 'human being': 500, 'numeric value': 400})
+
+
+--- turn 2 ---
+```python
+import random
+abbr = [q for q in qs if max(mp[q], key=mp[q].get)=='abbreviation']
+random.seed(1)
+for q in random.sample(abbr, 25): print(q)
+kw = re.compile(r"abbreviat|stand for|stands for|acronym|initials|short for", re.I)
+print(sum(1 for q in qs if kw.search(q)))
+```
+OUTPUT:
+What 's the abbreviation for limited partnership ?
+What is the abbreviation for micro ?
+CNN is the abbreviation for what ?
+What does e.g. stand for ?
+What is the full form of .com ?
+What does A&W of root beer fame stand for ?
+What is the abbreviation for micro ?
+CPR is the abbreviation for what ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+What does IBM stand for ?
+What is the abbreviated term used for the National Bureau of Investigation ?
+What does BMW stand for ?
+CNN is an acronym for what ?
+What does the abbreviation IOC stand for ?
+What 's the abbreviation for limited partnership ?
+What does CPR stand for ?
+What does Ms. , Miss , and Mrs. stand for ?
+What does LOL mean ?
+What is the abbreviation for Original Equipment Manufacturer ?
+What does the abbreviation cwt. ?
+What is AFS ?
+What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+What is the acronym for the rating system for air conditioner efficiency ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+In a computer , what does SCSI mean ?
+426
+
+
+--- turn 3 ---
+```python
+yn = jev_yesno(uniq, "Is this question asking for the abbreviation, acronym, or expansion of an abbreviation?")
+ynm = dict(zip(uniq, yn))
+print(sum(1 for q in qs if ynm[q] > 0.5))
+print(len(uniq), len(qs))
+# overlap between keyword and classifier
+kwset = [q for q in qs if kw.search(q)]
+print(sum(1 for q in kwset if ynm[q] > 0.5))
+# abbreviation-predicted but not yes/no
+dis = [q for q in qs if max(mp[q], key=mp[q].get)=='abbreviation' and ynm[q] <= 0.5]
+print(len(dis))
+for q in random.sample(dis, min(15, len(dis))): print(q, round(ynm[q],2))
+# numeric yes/no check
+yn_num = jev_yesno(uniq, "Does this question expect a numeric answer such as a number, date, amount, or measurement?")
+nm = dict(zip(uniq, yn_num))
+print(sum(1 for q in qs if nm[q] > 0.5))
+```
+OUTPUT:
+558
+2692 3182
+423
+1
+What is the literal meaning of `` D-DAY '' ? 0.5
+406
+
+
+--- turn 4 ---
+```python
+yn_h = dict(zip(uniq, jev_yesno(uniq, "Does this question expect a person, group of people, or individual as the answer?")))
+yn_l = dict(zip(uniq, jev_yesno(uniq, "Does this question expect a location (country, city, state, place) as the answer?")))
+yn_e = dict(zip(uniq, jev_yesno(uniq, "Does this question expect an entity such as an animal, food, product, object, color, sport, or substance as the answer?")))
+yn_d = dict(zip(uniq, jev_yesno(uniq, "Does this question expect a description, definition, explanation, reason, or manner as the answer?")))
+print("human", sum(yn_h[q]>0.5 for q in qs))
+print("location", sum(yn_l[q]>0.5 for q in qs))
+print("entity", sum(yn_e[q]>0.5 for q in qs))
+print("desc", sum(yn_d[q]>0.5 for q in qs))
+print("numeric", sum(nm[q]>0.5 for q in qs))
+print("abbr", sum(ynm[q]>0.5 for q in qs))
+```
+OUTPUT:
+human 658
+location 494
+entity 606
+desc 1258
+numeric 406
+abbr 558
+
+
+--- turn 5 ---
+```python
+abbr_nokw = [q for q in qs if ynm[q]>0.5 and not kw.search(q)]
+print(len(abbr_nokw))
+for q in random.sample(abbr_nokw, 30): print(q, round(ynm[q],2))
+num_arg = set(q for q in qs if max(mp[q], key=mp[q].get)=='numeric value')
+num_yn = set(q for q in qs if nm[q]>0.5)
+print(len(num_arg), len(num_yn), len(num_arg & num_yn), len(num_arg|num_yn))
+for q in random.sample(list(num_arg ^ num_yn), 20): print(q, round(nm[q],2), round(mp[q]['numeric value'],2))
+```
+OUTPUT:
+135
+What is SVHS ? 0.78
+What does NN O `` mean when used as a prefix in Irish surnames ? 0.67
+What is RCD ? 0.8
+What is AFS ? 0.82
+What is AFS ? 0.82
+What is the full name of the PLO ? 0.96
+What is the full name of the PLO ? 0.96
+What is LMDS ? 0.77
+What does LOL mean ? 0.94
+In a computer , what does SCSI mean ? 0.96
+What is SVHS ? 0.78
+What is DTMF ? 0.7
+What is LMDS ? 0.77
+What does LOL mean ? 0.94
+What does `` B.Y.O.B. '' mean ? 0.94
+What is DEET ? 0.56
+What does the word LASER mean ? 0.95
+What is RAM in the computer ? 0.62
+What does `` B.Y.O.B. '' mean ? 0.94
+What is LMDS ? 0.77
+What does LOL mean ? 0.94
+What does `` B.Y.O.B. '' mean ? 0.94
+What is DSL ? 0.74
+In a computer , what does SCSI mean ? 0.96
+What is RAM in the computer ? 0.62
+What is SVHS ? 0.78
+What does LOL mean ? 0.94
+What does BTU mean ? 0.95
+What is LMDS ? 0.77
+What does NN O `` mean when used as a prefix in Irish surnames ? 0.67
+400 406 400 406
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 7, in <module>
+ValueError: Sample larger than population or is negative
+
+
+--- turn 6 ---
+```python
+FINAL("Label: numeric value")
+```
+FINAL: Label: numeric value

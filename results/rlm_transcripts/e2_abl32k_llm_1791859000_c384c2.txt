@@ -1,0 +1,169 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: human being is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-3:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-3:])
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: Aug 09, 2022 || User: 58652 || Instance: What does LOL mean ?
+Date: May 23, 2025 || User: 50108 || Instance: Where did the Japanese Imperial Forces surrender to end WWII ?
+Date: Apr 17, 2022 || User: 87943 || Instance: What is the abbreviation of the International Olympic Committee ?
+Date: Jan 04, 2
+796
+['You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in context.split("\n"):
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m:
+        qs.append(m.group(1))
+print(len(qs))
+
+cats = ['location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept']
+def mk(chunk):
+    s = ("Classify each question by the category its answer belongs to, from: "
+         "'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n"
+         "Use 'abbreviation' for questions asking what an abbreviation stands for or the abbreviation of something. "
+         "Use 'human being' for questions whose answer is a person or group of people. "
+         "Reply with exactly one line per question in the format '<number>: <category>', nothing else.\n\n")
+    for i, q in enumerate(chunk):
+        s += f"{i+1}. {q}\n"
+    return s
+
+size = 40
+chunks = [qs[i:i+size] for i in range(0, len(qs), size)]
+prompts = [mk(c) for c in chunks]
+results = []
+for i in range(0, len(prompts), 8):
+    results += llm_query_batched(prompts[i:i+8])
+
+labels = []
+for c, r in zip(chunks, results):
+    got = {}
+    for line in r.split("\n"):
+        m = re.match(r"\s*(\d+)\s*[:.]\s*(.*)", line)
+        if m:
+            lab = m.group(2).strip().strip("'\"").lower()
+            for cat in cats:
+                if lab.startswith(cat):
+                    got[int(m.group(1))] = cat
+    for i in range(len(c)):
+        labels.append(got.get(i+1, None))
+
+from collections import Counter
+print(Counter(labels))
+print(len(labels))
+```
+OUTPUT:
+787
+Counter({'entity': 176, 'human being': 148, 'abbreviation': 133, 'description and abstract concept': 119, 'numeric value': 117, 'location': 94})
+787
+
+
+--- turn 3 ---
+```python
+abbr = [q for q, l in zip(qs, labels) if l == 'abbreviation']
+hum = [q for q, l in zip(qs, labels) if l == 'human being']
+kw = re.compile(r"stand for|abbreviat|acronym|initials|stands|short for|mean\b", re.I)
+sus = [q for q in abbr if not kw.search(q)]
+print(len(abbr), len(sus))
+for q in sus[:60]:
+    print("-", q)
+print("---- human sample")
+for q in hum[:30]:
+    print("-", q)
+```
+OUTPUT:
+133 22
+- What is AFS ?
+- What is SVHS ?
+- What is the full form of .com ?
+- What is HDLC ?
+- What is SAP ?
+- What is DEET ?
+- What is BPH ?
+- What is HTML ?
+- What is DEET ?
+- What is DTMF ?
+- What is AFS ?
+- What is RAM in the computer ?
+- What is RCD ?
+- What is the full name of the PLO ?
+- What is HDLC ?
+- What is DSL ?
+- What is LMDS ?
+- What is HTML ?
+- What is SAP ?
+- What is BPH ?
+- What is DTMF ?
+- What is LMDS ?
+---- human sample
+- What Cherokee Indian gave his name to a tree ?
+- Who is the superstar in rent-a-cars ?
+- Who was William Henry Harrison ?
+- Who discovered electricity ?
+- Who was the only person convicted in the My Lai Massacre ?
+- In Dana 's `` Two Years Before the Mast , '' what seafarers lived in an abandoned oven on the beach at San Diego ?
+- Which Vietnamese terrorist is now a UN delegate in Doonesbury ?
+- Who made the most appearances in the center square on Hollywood Squares ?
+- Who 's the only man to have won the Olympic decathlon twice ?
+- Who was the lawyer for Randy Steven Craft ?
+- What well-known actor is the father of star Alan Alda ?
+- Who wrote the poem that starts `` I love your lips when they 're wet with wine and red with a warm desire '' ?
+- Who portrayed The Cowardly Lion in The Wizard of Oz ?
+- Who wrote the book , `` Song of Solomon '' ?
+- Who coined the term NN cyberspace `` in his novel NN Neuromancer '' ?
+- What engineer invented the pull-tab can ?
+- Who directed `` Jaws '' ?
+- Who wrote The Red Badge of Courage ?
+- Name the scar-faced bounty hunter of The Old West .
+- Who taught Matt Murdock to use his extraordinary abilities in Marvel comics ?
+- Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+- Who won the first World Series ?
+- Who is Robin Williams ?
+- What Pulitzer Prize-winning novelist ran for mayor of New York City ?
+- Who graced the airwaves with such pearls as `` Do ya lo-o-ove me ? Get naked , baby ! '' ?
+- What celebrity couple , when going through a divorce , divided their toilet paper into two equal piles ?
+- Name of the lady the Great Gatsby pines for ?
+- What President was meant for , but never placed in , the empty crypt beneath the capital 's rotunda ?
+- What bestselling modern poet was the co-founder of the famous City Lights Bookshop in San Francisco ?
+- What was the name of the Titanic 's captain ?
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: human being is more common than abbreviation")
+```
+FINAL: Answer: human being is more common than abbreviation

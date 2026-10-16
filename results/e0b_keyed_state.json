@@ -1,0 +1,10 @@
+{
+ "keyed_B1": 0.95,
+ "keyed_B25": 0.97,
+ "keyed_B100": 0.965,
+ "keyed_B250": 0.96,
+ "keyed_lines_B1": 0.94,
+ "keyed_lines_B25": 0.97,
+ "keyed_lines_B100": 0.955,
+ "keyed_lines_B250": 0.96
+}

@@ -1,0 +1,121 @@
+Query: In the above data, is label 'entity' more common, less common, or the same frequency as label 'description and abstract concept'? Give your final answer in the form 'Answer: entity is [X] description and abstract concept', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+print(context[:1200])
+print(lines[-5:])
+```
+OUTPUT:
+796
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: 
+["Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+items = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: items.append(m.group(1))
+print(len(items))
+uniq = list(set(items))
+labels = {
+ 'location': 'answer is a place, city, country, or other location',
+ 'human being': 'answer is a person or group of people',
+ 'entity': 'answer is a concrete thing, animal, product, food, body part, color, sport, language, event, substance, etc.',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'numeric value': 'answer is a number, date, quantity, money, distance, duration, etc.',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+res = jev_classify(uniq, labels, "What category does the answer to this question belong to?")
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+c = Counter(pred[q] for q in items)
+print(c)
+```
+OUTPUT:
+787
+Counter({'entity': 190, 'human being': 145, 'abbreviation': 123, 'numeric value': 117, 'description and abstract concept': 117, 'location': 95})
+
+
+--- turn 2 ---
+```python
+abbr = [q for q in uniq if pred[q]=='abbreviation']
+import random
+random.seed(0)
+for q in random.sample(abbr, 25): print(q)
+# alternative: yes/no on whether question asks about an abbreviation
+ab_p = jev_yesno(uniq, "Does this question ask what an abbreviation, acronym or initialism stands for (or the abbreviation of something)?")
+print(sum(p>0.5 for p in ab_p))
+```
+OUTPUT:
+What does the word LASER mean ?
+What is the acronym for the rating system for air conditioner efficiency ?
+What does `` B.Y.O.B. '' mean ?
+What is DSL ?
+What does RCA stand for ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What does snafu stand for ?
+What does pH stand for ?
+What is the abbreviated form of the National Bureau of Investigation ?
+What is the abbreviation of the International Olympic Committee ?
+What does Ms. , Miss , and Mrs. stand for ?
+What is the full name of the PLO ?
+What does R.E.M. stand for , as in the rock group R.E.M. ?
+What is DTMF ?
+What is RCD ?
+What is HDLC ?
+What does SHIELD stand for ?
+What is the correct way to abbreviate cc. at the bottom of a business letter ?
+What does the abbreviation AIDS stand for ?
+What is LMDS ?
+In a computer , what does SCSI mean ?
+What is the abbreviation of the National Bureau of Investigation ?
+What does e.g. stand for ?
+What does NASDAQ stand for ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+80
+
+
+--- turn 3 ---
+```python
+abbr_set = {q for q, p in zip(uniq, ab_p) if p > 0.5}
+labels2 = {k: v for k, v in labels.items() if k != 'abbreviation'}
+res2 = jev_classify(uniq, labels2, "What category does the answer to this question belong to?")
+pred2 = {}
+for q, r, r1 in zip(uniq, res2, res):
+    if q in abbr_set:
+        pred2[q] = 'abbreviation'
+    else:
+        pred2[q] = max(r, key=r.get)
+c2 = Counter(pred2[q] for q in items)
+print(c2)
+print(c2['entity'], c2['description and abstract concept'])
+```
+OUTPUT:
+Counter({'entity': 181, 'human being': 145, 'abbreviation': 135, 'numeric value': 117, 'description and abstract concept': 116, 'location': 93})
+181 116
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: entity is more common than description and abstract concept")
+```
+FINAL: Answer: entity is more common than description and abstract concept

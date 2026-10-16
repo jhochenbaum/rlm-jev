@@ -1,0 +1,4 @@
+#!/bin/sh
+# jev CLI: runs jevlab.cli in the project's uv environment, from any directory.
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}" exec uv run --project "$DIR" python -m jevlab.cli "$@"

@@ -1,0 +1,162 @@
+Query: In the above data, how many data points should be classified as label 'location'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+print(context[:1500])
+print(lines[-5:])
+```
+OUTPUT:
+796
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: Aug 09, 2022 || User: 58652 || Instance: What does LOL mean ?
+Date: May 23, 2025 || User: 50108 || Instance: Where did the Japanese Imperial Forces surrender to end WWII ?
+Date: Apr 17, 2022 || User: 87943 || Instance: What is the abbreviation of the International Olympic Committee ?
+Date: Jan 04, 2
+["Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+items = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: items.append(m.group(1))
+print(len(items))
+labels = {
+ 'location': 'answer is a place: country, city, mountain, river, address, etc.',
+ 'human being': 'answer is a person or group of people, an individual, title or organization of people',
+ 'entity': 'answer is a thing: animal, product, food, color, body part, sport, substance, creation, event, etc.',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+ 'numeric value': 'answer is a number, date, money, distance, count, duration, percentage etc.',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+uniq = list(dict.fromkeys(items))
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+from collections import Counter
+c = Counter(pred[q] for q in items)
+print(c)
+```
+OUTPUT:
+787
+Counter({'entity': 173, 'human being': 154, 'abbreviation': 125, 'description and abstract concept': 120, 'numeric value': 117, 'location': 98})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(0)
+abb = [q for q in uniq if pred[q]=='abbreviation']
+print(len(abb))
+for q in random.sample(abb, 25): print('-', q)
+locs = [q for q in uniq if pred[q]=='location']
+print('--- loc sample')
+for q in random.sample(locs, 20): print('-', q)
+```
+OUTPUT:
+73
+- What is the abbreviation for Original Equipment Manufacturer ?
+- What does CPR stand for ?
+- What does G.M.T. stand for ?
+- What does e.g. stand for ?
+- What does pH stand for ?
+- What is the full name of the PLO ?
+- What do the letters D.C. stand for in Washington , D.C. ?
+- What does U.S.S.R. stand for ?
+- When reading classified ads , what does EENTY : other stand for ?
+- What is DTMF ?
+- What 's the abbreviation for trinitrotoluene ?
+- What is the abbreviation of General Motors ?
+- What does S.O.S. stand for ?
+- What is the full form of .com ?
+- What is BPH ?
+- What does SHIELD stand for ?
+- What is HDLC ?
+- What is DSL ?
+- What does `` B.Y.O.B. '' mean ?
+- What is the acronym for the National Bureau of Investigation ?
+- What does NASA stand for ?
+- What is LMDS ?
+- What is the abbreviation of the company name ` General Motors ' ?
+- What does IOC stand for ?
+- What does BUD stand for ?
+--- loc sample
+- What country did the Allies invade in World War II 's Operation Avalanche ?
+- What 's the oldest capital city in the Americas ?
+- What sun-blasted , 14-mile wide valley is just north of the Mojave desert ?
+- What is the former name of Zimbabwe ?
+- Where can I get information and statistics on countries and nations ?
+- What state is Niagara Falls located in ?
+- What desert has been called The Garden of Allah ?
+- What ocean was Amelia Earhart flying over when she disappeared ?
+- What city is terrorized by Dracula in The Night Stalker ?
+- What famed London criminal court was once a feudal castle ?
+- What country 's capital was formed when Pesth and Buda merged ?
+- What mountains lie between the Arkansas and Missouri rivers ?
+- What country does Ileana Cotrubas come from ?
+- What country was first to use the airplane as a weapon of war , against the Turks in Libya ?
+- In what part of the world is Mozambique ?
+- What country is the origin of the band the Creeps ?
+- Which country is Australia 's largest export market ?
+- What were the first three cities to have a population of more than a million ?
+- Where are the Union Stockyards ?
+- What is the name of the largest city in Chile , South America ?
+
+
+--- turn 3 ---
+```python
+borderline = []
+for q, r in zip(uniq, res):
+    top = max(r, key=r.get)
+    if top != 'location' and r['location'] > 0.2:
+        borderline.append((r['location'], q, top))
+    elif top == 'location' and r['location'] < 0.6:
+        borderline.append((r['location'], q, top))
+borderline.sort(reverse=True)
+print(len(borderline))
+for p, q, t in borderline[:50]: print(round(p,2), t, '|', q)
+```
+OUTPUT:
+13
+0.54 location | Where can I find out the top 1 singles ?
+0.52 location | What is the origin of the midwest slang , ` you 're darn tootin ' ?
+0.48 location | What is worth seeing in Reims ?
+0.44 location | Where can I get information and statistics on countries and nations ?
+0.39 description and abstract concept | Where does the weird shape of the dinner fish knife originate from ?
+0.37 human being | Where can I get cotton textiles importer details ?
+0.28 description and abstract concept | What is the origin of the proverb `` A stitch in time saves nine '' ?
+0.27 entity | What gate opened on East and West Berlin ?
+0.25 description and abstract concept | Where does `` bovine '' come from ?
+0.25 entity | What is the website for the USA journal ?
+0.22 description and abstract concept | What is the origin of the word `` tampon '' ?
+0.22 entity | What is the nickname of Pennsylvania ?
+0.22 human being | What cheery fellow got the ZIP code 9971 from the U.S. Postal Service in 1963 ?
+
+
+--- turn 4 ---
+```python
+adjust = 0
+adjust -= 1  # "origin of the midwest slang" is a description, not a location
+adjust += 1  # "Where can I get cotton textiles importer details" is a location-type answer
+adjust += 1  # "What gate opened on East and West Berlin" is a location-type answer
+total = c['location'] + adjust
+print(total)
+FINAL(f"Answer: {total}")
+```
+FINAL: Answer: 99

@@ -1,0 +1,49 @@
+{
+ "external_pool": {
+  "n_disjoint_available": 1721,
+  "n_sampled": 1000,
+  "jev_acc": 0.723
+ },
+ "unweighted": {
+  "weights": {
+   "description and abstract concept": 1.0,
+   "entity": 1.0,
+   "human being": 1.0,
+   "numeric value": 1.0,
+   "location": 1.0,
+   "abbreviation": 1.0
+  },
+  "valpool_record_acc": 0.9438689472416285,
+  "count_relerr": 0.07922492902966739,
+  "oolong_overall": 0.7284829705102762,
+  "oolong_131k": 0.7111573030259564
+ },
+ "fit on 300 external": {
+  "weights": {
+   "description and abstract concept": 0.03,
+   "entity": 0.5,
+   "human being": 1.5,
+   "numeric value": 1.0,
+   "location": 1.0,
+   "abbreviation": 0.03
+  },
+  "valpool_record_acc": 0.9407371717658396,
+  "count_relerr": 0.08500681657202591,
+  "oolong_overall": 0.7727455521155531,
+  "oolong_131k": 0.6979422040042563
+ },
+ "fit on 1000 external": {
+  "weights": {
+   "description and abstract concept": 0.03,
+   "entity": 0.5,
+   "human being": 1.5,
+   "numeric value": 1.0,
+   "location": 1.0,
+   "abbreviation": 1.0
+  },
+  "valpool_record_acc": 0.9407371717658396,
+  "count_relerr": 0.08060355251963904,
+  "oolong_overall": 0.7826519116986429,
+  "oolong_131k": 0.6415877928731788
+ }
+}

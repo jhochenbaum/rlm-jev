@@ -1,0 +1,118 @@
+Query: For the following question, only consider the subset of instances that are associated with user IDs 88370. Among instances associated with these users, which of the labels is the least common? Give your final answer in the form 'Label: answer' where answer is one of the labels: entity, human being, location, numeric value, abbreviation, description and abstract concept.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print(context[-500:])
+import re
+lines = context.split('\n')
+print(len(lines))
+print(lines[5:15])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+d for ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+3191
+['Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?', "Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?", 'Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?', 'Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?', 'Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?', 'Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?', 'Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?', 'Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?', 'Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter marketed ?', 'Date: Oct 31, 2023 || User: 15752 || Instance: Who won a Pulitzer Prize for his novel The Caine Mutiny ?']
+
+
+--- turn 1 ---
+```python
+import re
+rows=[]
+for l in lines:
+    m=re.match(r'Date: (.*?) \|\| User: (\d+) \|\| Instance: (.*)',l)
+    if m: rows.append((m.group(1),m.group(2),m.group(3)))
+print(len(rows))
+sub=[r for r in rows if r[1]=='88370']
+print(len(sub))
+for r in sub: print(r)
+```
+OUTPUT:
+3182
+13
+('Jun 09, 2023', '88370', 'Who won Oscars for her roles in Gone with the Wind and A Streetcar Named Desire ?')
+('May 21, 2023', '88370', 'What party was Winston Churchill a member of ?')
+('Nov 04, 2024', '88370', 'Where can I find a lesson plan for teaching the metric system conversion to American standard ?')
+('Jan 30, 2024', '88370', "What 's the green variety of beryl called ?")
+('Feb 24, 2024', '88370', 'Which is the only Dick Tracy villain to appear three times ?')
+('Jul 02, 2024', '88370', 'What bay sparkles next to Miami , Florida ?')
+('Sep 06, 2023', '88370', "What 's the Hungarian word for pepper ?")
+('Sep 06, 2023', '88370', "What is the abbreviation of the company name ` General Motors ' ?")
+('May 08, 2023', '88370', 'What is false consciousness ?')
+('Dec 25, 2023', '88370', 'Whose biography by Maurice Zolotow is titled Shooting Star ?')
+('Feb 14, 2023', '88370', 'What stringed weapon fires a bolt ?')
+('Jun 16, 2022', '88370', 'What female faith healer wrote the inspirational book I Believe in Miracles ?')
+('Jun 14, 2022', '88370', 'How many people live in Tokyo ?')
+
+
+--- turn 2 ---
+```python
+labels = {
+ 'entity': 'answer is a thing, animal, product, food, color, word, language, body part, event, etc.',
+ 'human being': 'answer is a person, group of people, or organization of people',
+ 'location': 'answer is a place: city, country, state, bay, mountain, etc.',
+ 'numeric value': 'answer is a number, count, date, money, size, duration, etc.',
+ 'abbreviation': 'answer is an abbreviation or acronym or its expansion',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+items=[r[2] for r in sub]
+res=jev_classify(items, labels, instruction="What type of answer does this question expect?")
+from collections import Counter
+c=Counter()
+for it,p in zip(items,res):
+    top=max(p,key=p.get)
+    c[top]+=1
+    print(top, round(p[top],2), it)
+print(c)
+for k in labels: print(k, c.get(k,0))
+```
+OUTPUT:
+human being 1.0 Who won Oscars for her roles in Gone with the Wind and A Streetcar Named Desire ?
+human being 0.59 What party was Winston Churchill a member of ?
+location 0.77 Where can I find a lesson plan for teaching the metric system conversion to American standard ?
+entity 1.0 What 's the green variety of beryl called ?
+human being 0.76 Which is the only Dick Tracy villain to appear three times ?
+location 1.0 What bay sparkles next to Miami , Florida ?
+entity 1.0 What 's the Hungarian word for pepper ?
+abbreviation 1.0 What is the abbreviation of the company name ` General Motors ' ?
+description and abstract concept 1.0 What is false consciousness ?
+human being 0.99 Whose biography by Maurice Zolotow is titled Shooting Star ?
+entity 1.0 What stringed weapon fires a bolt ?
+human being 1.0 What female faith healer wrote the inspirational book I Believe in Miracles ?
+numeric value 1.0 How many people live in Tokyo ?
+Counter({'human being': 5, 'entity': 3, 'location': 2, 'abbreviation': 1, 'description and abstract concept': 1, 'numeric value': 1})
+entity 3
+human being 5
+location 2
+numeric value 1
+abbreviation 1
+description and abstract concept 1
+
+
+--- turn 3 ---
+```python
+FINAL("Label: abbreviation")
+```
+FINAL: Label: abbreviation

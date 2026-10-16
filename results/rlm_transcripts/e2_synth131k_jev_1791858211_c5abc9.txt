@@ -1,0 +1,134 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: description and abstract concept is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-5:])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+3191
+["Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, explanation, reason, manner, or abstract concept',
+ 'entity': 'answer is a thing/entity: animal, product, food, object, event, language, sport, color, etc.',
+ 'human being': 'answer is a person or group of people, or an individual',
+ 'numeric value': 'answer is a number, count, date, money, distance, weight, duration, percentage etc.',
+ 'location': 'answer is a place: city, country, state, mountain, address, etc.',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+}
+res = jev_classify(uq, labels, instruction="What category does the answer to this question belong to?")
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+3182 2383
+Counter({'numeric value': 966, 'entity': 832, 'human being': 416, 'description and abstract concept': 352, 'location': 320, 'abbreviation': 296})
+
+
+--- turn 2 ---
+```python
+import random
+random.seed(1)
+for lab in ['numeric value','description and abstract concept','abbreviation']:
+    ex = [q for q in uq if pred[q]==lab]
+    print("==",lab,len(ex))
+    for q in random.sample(ex,12): print("  ",q)
+```
+OUTPUT:
+== numeric value 614
+   How many people hike ?
+   How many electoral votes does it take to win presidency ?
+   What year did Hitler die ?
+   What is the frequency of VHF ?
+   In what year was the Wall built ?
+   How long after intercourse does it take to find out if you are pregnant ?
+   What year was Janet Jackson 's first album released ?
+   What is the population of Mexico ?
+   How much can a person be fined for having a dog on a beach ?
+   How much does a new railroad coal car cost ?
+   How many states have a `` lemon law '' for new automobiles ?
+   What was the date of CNN 's first broadcast ?
+== description and abstract concept 335
+   What is habeas corpus ?
+   What is false consciousness ?
+   What is form drag ?
+   What is multimedia ?
+   How is the new Ford Econoline van F25 V1 engine ?
+   Why shouldn 't you remove a bee stinger with tweezers ?
+   What is a plant supplement ?
+   What are the requirements for becoming a citizen of Australia ?
+   What do the names Andrew and Christina mean ?
+   Why are there no white lines on pro footballs ?
+   What is e-commerce ?
+   How do you exterminate bees that are in the walls of your home ? Will bee eggs remain over winter ?
+== abbreviation 75
+   What is the abbreviation for Original Equipment Manufacturer ?
+   What is the abbreviation of the company name ` General Motors ' ?
+   What is the abbreviated form of the National Bureau of Investigation ?
+   What is DSL ?
+   What does ` PSI ' stand for ?
+   What is the abbreviation of the International Olympic Committee ?
+   What is RAM in the computer ?
+   What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+   What does IOC stand for ?
+   What 's the abbreviation for limited partnership ?
+   In a computer , what does SCSI mean ?
+   What does the acronym CPR mean ?
+
+
+--- turn 3 ---
+```python
+yn_desc = jev_yesno(uq, "Is the answer to this question a description, definition, explanation, reason, or abstract concept (rather than a specific entity, person, place, number, or abbreviation)?")
+yn_num = jev_yesno(uq, "Is the answer to this question a numeric value (a number, count, date, year, money amount, distance, duration, etc.)?")
+d = dict(zip(uq, yn_desc)); n = dict(zip(uq, yn_num))
+print("desc yes>0.5:", sum(d[q]>0.5 for q in qs), " num yes>0.5:", sum(n[q]>0.5 for q in qs))
+print("desc sum prob:", sum(d[q] for q in qs), " num sum prob:", sum(n[q] for q in qs))
+sp = Counter()
+rmap = dict(zip(uq, res))
+for q in qs:
+    for k, v in rmap[q].items(): sp[k] += v
+print(sp)
+```
+OUTPUT:
+desc yes>0.5: 471  num yes>0.5: 974
+desc sum prob: 639.8299999999914  num sum prob: 1058.6499999999853
+Counter({'numeric value': 965.0399999999996, 'entity': 823.1699999999983, 'human being': 419.24999999999983, 'description and abstract concept': 375.2599999999978, 'location': 312.10000000000014, 'abbreviation': 287.0599999999996})
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: description and abstract concept is less common than numeric value")
+```
+FINAL: Answer: description and abstract concept is less common than numeric value

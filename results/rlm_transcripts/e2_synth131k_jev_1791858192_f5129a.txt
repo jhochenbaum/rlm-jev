@@ -1,0 +1,218 @@
+Query: In the above data, how many data points should be classified as label 'description and abstract concept'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500]); lines=context.split("\n"); print(len(lines)); print(lines[-3:])</parameter>
+</invoke>
+
+
+
+<invoke name="python">
+<parameter name="code">print(context[300:1500]); lines=context.split("\n"); print(len(lines)); print(lines[-3:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[300:1500]); lines=context.split("\n"); print(len(lines)); print(lines[-3:])
+```
+OUTPUT:
+ the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+3191
+['You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 2 ---
+```python
+import re
+qs=[]
+for l in lines:
+    m=re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq=list(set(qs))
+labels={
+ 'numeric value':'answer is a number, count, date, money, size, duration, percentage, etc.',
+ 'entity':'answer is a thing: animal, product, food, body part, color, language, sport, event, work, substance, etc.',
+ 'human being':'answer is a person, group of people, or organization/individual',
+ 'location':'answer is a place: country, city, state, mountain, address, etc.',
+ 'abbreviation':'answer is an abbreviation or the expansion of an abbreviation',
+ 'description and abstract concept':'answer is a description, definition, manner, reason, or abstract concept',
+}
+res=jev_classify(uq, labels, "What type of answer does this question ask for?")
+pred={q:max(r,key=r.get) for q,r in zip(uq,res)}
+from collections import Counter
+c=Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+3182 2692
+Counter({'entity': 627, 'description and abstract concept': 610, 'location': 528, 'abbreviation': 513, 'human being': 503, 'numeric value': 401})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(0)
+ab=[q for q in uq if pred[q]=='abbreviation']
+for q in random.sample(ab,25): print(q)
+print('---')
+de=[q for q in uq if pred[q]=='description and abstract concept']
+for q in random.sample(de,15): print(q)
+```
+OUTPUT:
+What is LMDS ?
+What 's the abbreviation for limited partnership ?
+What does the abbreviation AIDS stand for ?
+What does S.O.S. stand for ?
+What does A&W of root beer fame stand for ?
+What is the abbreviation of General Motors ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What does Ms. , Miss , and Mrs. stand for ?
+What does RCA stand for ?
+What is the correct way to abbreviate cc. at the bottom of a business letter ?
+What does R.E.M. stand for , as in the rock group R.E.M. ?
+What does the abbreviation cwt. ?
+What does the T.S. stand for in T.S. Eliot 's name ?
+What does pH stand for ?
+What does BTU mean ?
+What does the abbreviation IOC stand for ?
+CNN is the abbreviation for what ?
+What is AFS ?
+CNN is an acronym for what ?
+What is the abbreviated expression for the National Bureau of Investigation ?
+What does IQ stand for ?
+What 's the abbreviation for trinitrotoluene ?
+What does e.g. stand for ?
+What does LOL mean ?
+What does the channel ESPN stand for ?
+---
+What does `` Janelle '' mean ?
+What is Olestra ?
+What is saltpeter ?
+Why does cotton get caught in belly buttons ?
+What is the difference between microprocessors & microcontrollers ?
+Why did Egyptians shave their eyebrows ?
+What is a green bog ?
+Why do men snore ?
+What exactly is radiation ?
+What does idle mean ?
+What is the origin of the word `` tampon '' ?
+What is endometriosis ?
+What was the reason for the partition of the Anglican and Vatican churches ?
+What is a meerkat ?
+Why can 't ostriches fly ?
+
+
+--- turn 4 ---
+```python
+import random
+random.seed(1)
+margin={}
+for q,r in zip(uq,res):
+    s=sorted(r.values(),reverse=True)
+    margin[q]=s[0]-s[1]
+low=[q for q in uq if margin[q]<0.3]
+print(len(low))
+for q in random.sample(low,40):
+    r=res[uq.index(q)]
+    top=sorted(r,key=r.get,reverse=True)[:2]
+    print(pred[q][:12],'|',top[1][:12],'|',q)
+```
+OUTPUT:
+100
+location | entity | What is the principal river of Ireland ?
+location | entity | What river does the Grand Coulee Dam dam ?
+human being | entity | What TV character sired a horse named Thunder ?
+entity | description  | What 's a `` coup de poing '' to a French boxer ?
+human being | entity | What is the Islamic equivalent of the Red Cross ?
+description  | abbreviation | What is the literal meaning of `` D-DAY '' ?
+location | entity | What is the US Federal Government website for Standard Industrial Classification codes , SIC , ?
+description  | entity | What is the Lost Colony ?
+entity | description  | What is `` bloodhound '' ?
+description  | entity | What is yohimbine ?
+entity | description  | What were the three prophecies the witches make to Macbeth ?
+entity | location | Where are good science sites on the Internet ?
+entity | description  | In Waugh 's `` A Handful of Dust , '' what does the mad old man force the hero to do every afternoon ?
+description  | entity | What 's new in the postal world in 1999 ?
+human being | entity | Who was the original Humpty Dumpty ?
+description  | entity | What is `` snoogans '' ?
+description  | abbreviation | What is DTMF ?
+entity | description  | What nuclear process takes place in an H-bomb ?
+location | entity | What did Esquire name Ash Hole of the Year for 1980 ?
+location | description  | Where can I find the history of the Taiwanese language ?
+description  | entity | What are some children 's rights ?
+human being | entity | What were Babe Ruth 's Christian names ?
+entity | human being | What was archy , and mehitabel ?
+entity | human being | What are the characters ' names in the Scooby-Doo cartoon ?
+entity | description  | What did n't Rocky Marciano do in his pro boxing career ?
+entity | location | What famed river flows through Bagdad ?
+entity | location | What is the longest river in the United States ?
+entity | description  | What 's the last line of Dickens 's A Christmas Carol ?
+entity | location | What planet would you visit to see Bebrenia , Arcadia , and Amazonis ?
+location | entity | What river flows through Vienna , Budapest and Belgrade ?
+description  | entity | What are the seven virtues ?
+location | entity | Where can I find a list of all the companies in America that offer a direct stock purchase plan ?
+description  | entity | What is a Devo hat ?
+entity | location | Name an art gallery in New York .
+entity | description  | What is the chemical composition of a Barbie ?
+entity | human being | What star-faring race brought about the Inhumans on Marvel 's Earth ?
+description  | entity | What is a meerkat ?
+entity | location | What is the highest waterfall in the United States ?
+entity | description  | What is The Gay Science ?
+entity | human being | What is Dr. Ruth 's last name ?
+
+
+--- turn 5 ---
+```python
+labels2={
+ 'numeric value':'asks for a number: count, date, year, money, size, speed, distance, duration, percentage, code',
+ 'entity':'asks for a thing: animal, plant, food, body part, color, creature, currency, instrument, language, product, sport, vehicle, work of art, event, substance, term, symbol',
+ 'human being':'asks for a person: an individual, a group, an organization, or a title/description of a person',
+ 'location':'asks for a place: city, country, state, mountain, river, planet, address, other location',
+ 'abbreviation':'asks what an abbreviation or acronym stands for, or for the abbreviation of something',
+ 'description and abstract concept':'asks for a definition, description of something, manner of doing, reason or cause, or the meaning of a word/concept',
+}
+res2=jev_classify(uq, labels2, "Which kind of answer does this question expect?")
+pred2={q:max(r,key=r.get) for q,r in zip(uq,res2)}
+c2=Counter(pred2[q] for q in qs)
+print(c2)
+agree=sum(pred[q]==pred2[q] for q in uq)
+print(agree,len(uq))
+# averaged ensemble
+pred3={}
+for q,r1,r2 in zip(uq,res,res2):
+    avg={k:(r1[k]+r2[k])/2 for k in r1}
+    pred3[q]=max(avg,key=avg.get)
+c3=Counter(pred3[q] for q in qs)
+print(c3)
+```
+OUTPUT:
+Counter({'entity': 610, 'description and abstract concept': 596, 'location': 536, 'abbreviation': 532, 'human being': 508, 'numeric value': 400})
+2634 2692
+Counter({'entity': 621, 'description and abstract concept': 597, 'location': 534, 'abbreviation': 527, 'human being': 503, 'numeric value': 400})
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: 597")
+```
+FINAL: Answer: 597

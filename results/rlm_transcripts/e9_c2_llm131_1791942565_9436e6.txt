@@ -1,0 +1,142 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'human being'? Give your final answer in the form 'Answer: description and abstract concept is [X] human being', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<python>
+print(context[300:1500])
+</python>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[300:1500])
+```
+OUTPUT:
+ the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+
+
+--- turn 2 ---
+```python
+import re
+lines = [l for l in context.split("\n") if l.startswith("Date:")]
+qs = [l.split("Instance:",1)[1].strip() for l in lines]
+print(len(qs))
+cats = ['description and abstract concept','entity','human being','numeric value','location','abbreviation']
+def mk(batch):
+    s = ("Classify each question by the type of its answer into exactly one of: "
+         "'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n"
+         "Reply with one line per question formatted 'N: label', nothing else.\n\n")
+    s += "\n".join(f"{i+1}: {q}" for i,q in enumerate(batch))
+    return s
+B=80
+batches=[qs[i:i+B] for i in range(0,len(qs),B)]
+prompts=[mk(b) for b in batches]
+outs=[]
+for i in range(0,len(prompts),8):
+    outs += llm_query_batched(prompts[i:i+8])
+from collections import Counter
+cnt=Counter()
+for b,o in zip(batches,outs):
+    for m in re.finditer(r"(\d+):\s*'?([a-z ]+?)'?\s*$", o, re.M):
+        lab=m.group(2).strip()
+        if lab in cats: cnt[lab]+=1
+print(cnt, sum(cnt.values()))
+</python>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 266, in _turns
+    exec(code[0], ns)
+  File "<string>", line 25
+    </python>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 3 ---
+```python
+import re
+from collections import Counter
+lines = [l for l in context.split("\n") if l.startswith("Date:")]
+qs = [l.split("Instance:",1)[1].strip() for l in lines]
+print(len(qs))
+cats = ['description and abstract concept','entity','human being','numeric value','location','abbreviation']
+def mk(batch):
+    s = ("Classify each question by the type of its answer into exactly one of: "
+         "'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n"
+         "Reply with one line per question formatted 'N: label', nothing else.\n\n")
+    s += "\n".join(f"{i+1}: {q}" for i,q in enumerate(batch))
+    return s
+B=80
+batches=[qs[i:i+B] for i in range(0,len(qs),B)]
+prompts=[mk(b) for b in batches]
+outs=[]
+for i in range(0,len(prompts),8):
+    outs += llm_query_batched(prompts[i:i+8])
+cnt=Counter()
+for b,o in zip(batches,outs):
+    for m in re.finditer(r"(\d+):\s*'?([a-z ]+?)'?\s*$", o, re.M):
+        lab=m.group(2).strip()
+        if lab in cats: cnt[lab]+=1
+print(cnt, sum(cnt.values()))
+```
+OUTPUT:
+3182
+Counter({'numeric value': 924, 'entity': 734, 'human being': 413, 'description and abstract concept': 341, 'location': 314, 'abbreviation': 296}) 3022
+
+
+--- turn 4 ---
+```python
+def parse(o):
+    d={}
+    for m in re.finditer(r"(\d+)\s*[:.)-]\s*\W*([a-z ]+?)\W*\s*$", o, re.M):
+        lab=m.group(2).strip()
+        if lab in cats: d[int(m.group(1))]=lab
+    return d
+labels={}
+for bi,(b,o) in enumerate(zip(batches,outs)):
+    d=parse(o)
+    for k,v in d.items():
+        if 1<=k<=len(b): labels[bi*B+k-1]=v
+for rnd in range(4):
+    missing=[i for i in range(len(qs)) if i not in labels]
+    print(rnd,len(missing))
+    if not missing: break
+    chunks=[missing[i:i+40] for i in range(0,len(missing),40)]
+    ps=[mk([qs[i] for i in c]) for c in chunks]
+    res=[]
+    for i in range(0,len(ps),8):
+        res+=llm_query_batched(ps[i:i+8])
+    for c,o in zip(chunks,res):
+        for k,v in parse(o).items():
+            if 1<=k<=len(c): labels[c[k-1]]=v
+cnt=Counter(labels.values())
+print(cnt,sum(cnt.values()))
+```
+OUTPUT:
+0 160
+1 0
+Counter({'numeric value': 966, 'entity': 779, 'human being': 437, 'description and abstract concept': 357, 'location': 336, 'abbreviation': 307}) 3182
+
+
+--- turn 5 ---
+```python
+FINAL("Answer: description and abstract concept is less common than human being")
+```
+FINAL: Answer: description and abstract concept is less common than human being

@@ -1,0 +1,213 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'human being'? Give your final answer in the form 'Answer: description and abstract concept is [X] human being', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print(context[-500:])
+lines = context.split("\n")
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+d for ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+3191
+
+
+--- turn 1 ---
+```python
+import re
+qs = [l.split("Instance: ",1)[1] for l in lines if "|| Instance: " in l]
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, explanation, reason, manner, or abstract concept',
+ 'entity': 'answer is a thing/entity such as an animal, food, object, product, event, color, language, body part, etc.',
+ 'human being': 'answer is a person, a group of people, or an individual/organization of people',
+ 'numeric value': 'answer is a number, count, date, money, size, distance, duration, or other numeric value',
+ 'location': 'answer is a place such as a city, country, state, mountain, or other location',
+ 'abbreviation': 'answer is an abbreviation or the expansion of an abbreviation',
+}
+res = jev_classify(uq, labels, instruction="What type of answer does this question ask for?")
+from collections import Counter
+c = Counter(max(r, key=r.get) for r in res)
+d = dict(zip(uq, res))
+c2 = Counter(max(d[q], key=d[q].get) for q in qs)
+print(c2)
+```
+OUTPUT:
+3182 2383
+Counter({'numeric value': 965, 'entity': 825, 'human being': 420, 'description and abstract concept': 378, 'location': 310, 'abbreviation': 284})
+
+
+--- turn 2 ---
+```python
+import random
+yn_h = jev_yesno(uq, "Is the answer to this question a person or group of people (a human being)?")
+yn_d = jev_yesno(uq, "Is the answer to this question a description, definition, explanation, reason, or abstract concept?")
+dh = dict(zip(uq, yn_h)); dd = dict(zip(uq, yn_d))
+print("sum P(human):", sum(dh[q] for q in qs), " sum P(desc):", sum(dd[q] for q in qs))
+print("thresh .5 human:", sum(dh[q]>0.5 for q in qs), " desc:", sum(dd[q]>0.5 for q in qs))
+# compare with classify probs
+print("sum classify prob human:", sum(d[q]['human being'] for q in qs), " desc:", sum(d[q]['description and abstract concept'] for q in qs))
+random.seed(1)
+for q in random.sample(uq, 15):
+    print(max(d[q], key=d[q].get), round(dh[q],2), round(dd[q],2), q)
+```
+OUTPUT:
+sum P(human): 567.6099999999867  sum P(desc): 1033.3800000000078
+thresh .5 human: 448  desc: 839
+sum classify prob human: 421.5699999999999  desc: 389.79999999999853
+human being 0.81 0.29 Who is the current prime minister and president of Russia ?
+human being 0.97 0.11 What English playwright penned : `` Where the bee sucks , so shall I '' ?
+numeric value 0.35 0.09 How many people live in cities ?
+human being 0.97 0.15 What is the name of the Indian who became prime minister by beating Mrs. Gandhi in the 1977 election ?
+numeric value 0.01 0.12 In what year did China and the Republic of Korea establish diplomatic relations ?
+entity 0.09 0.17 What TV series features the adventures of a married couple named Jonathan and Jennifer ?
+numeric value 0.03 0.15 How much did the Iran-Contra investigation cost ?
+numeric value 0.05 0.1 How many pitchers occupy the shelf beside the crouching woman in Edgar Degas 's 1886 painting The Tub ?
+entity 0.08 0.3 What future movie treat was introduced to American colonists in 1603 by Native Americans ?
+description and abstract concept 0.02 0.89 How does a parachute work ?
+entity 0.07 0.14 What Michelangelo sculpture is in Saint Peter 's Cathedral , Basilica , ?
+entity 0.04 0.48 What animals acted as lapwarmers for American colonists in church ?
+numeric value 0.28 0.1 How many people own pets ?
+entity 0.04 0.52 What species was Winnie the Pooh ?
+description and abstract concept 0.03 0.89 What is cunnilingus ?
+
+
+--- turn 3 ---
+```python
+labels2 = {
+ 'description and abstract concept': 'asks for a definition, description, explanation, manner, reason, or meaning of something (how/why/what is X)',
+ 'entity': 'asks for a specific thing: animal, food, product, object, substance, color, sport, creative work, event, language, etc.',
+ 'human being': 'asks who: a person, a group, a nationality, an organization or title of a person',
+ 'numeric value': 'asks for a number, date, year, amount, count, money, speed, size, or period of time',
+ 'location': 'asks where: a city, country, state, river, mountain, or other place',
+ 'abbreviation': 'asks what an abbreviation stands for or the abbreviation of a term',
+}
+res2 = jev_classify(uq, labels2, instruction="Which category best describes the expected answer to this question?")
+d2 = dict(zip(uq, res2))
+c3 = Counter(max(d2[q], key=d2[q].get) for q in qs)
+print(c3)
+print("sum prob:", {k: round(sum(d2[q][k] for q in qs)) for k in labels2})
+# agreement
+print(sum(max(d[q],key=d[q].get)==max(d2[q],key=d2[q].get) for q in qs)/len(qs))
+```
+OUTPUT:
+Counter({'numeric value': 966, 'entity': 792, 'human being': 425, 'description and abstract concept': 397, 'location': 319, 'abbreviation': 283})
+sum prob: {'description and abstract concept': 422, 'entity': 782, 'human being': 433, 'numeric value': 962, 'location': 307, 'abbreviation': 276}
+0.9773727215587681
+
+
+--- turn 4 ---
+```python
+# Look at cases where the two methods disagree about desc vs human
+cands = []
+for q in uq:
+    top = max(d2[q], key=d2[q].get)
+    cands.append((q, top, d2[q]['description and abstract concept'], d2[q]['human being'], dd[q], dh[q]))
+# Questions where desc yes/no high but classify top is not desc
+a = [x for x in cands if x[1] != 'description and abstract concept' and x[4] > 0.6]
+print(len(a))
+random.seed(3)
+for x in random.sample(a, 25):
+    print(x[1], round(x[2],2), round(x[4],2), x[0][:110])
+print('----- human yes/no high but classify not human')
+b = [x for x in cands if x[1] != 'human being' and x[5] > 0.6]
+print(len(b))
+for x in random.sample(b, 20):
+    print(x[1], round(x[3],2), round(x[5],2), x[0][:110])
+```
+OUTPUT:
+159
+abbreviation 0.0 0.69 What do the letters D.C. stand for in Washington , D.C. ?
+numeric value 0.49 0.62 How often are brain cells replaced ?
+abbreviation 0.0 0.76 What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+entity 0.14 0.64 What is a female rabbit called ?
+human being 0.02 0.81 Who is Edmund Kemper ?
+abbreviation 0.01 0.76 What does U.S.S.R. stand for ?
+entity 0.13 0.64 What species is a colt ?
+human being 0.01 0.76 Who is Samuel Pickering ?
+location 0.0 0.62 What is the location of Edinburgh , Scotland ?
+human being 0.01 0.8 Who is Zebulon Pike ?
+human being 0.01 0.72 Who was Darius ?
+human being 0.01 0.72 Who is Coronado ?
+abbreviation 0.05 0.83 What does LOL mean ?
+entity 0.01 0.81 What color tennis balls are used at Wimbledon ?
+abbreviation 0.01 0.67 What is the full form of .com ?
+location 0.02 0.8 Where must a soccer goalie stand to be permitted to handle the ball ?
+entity 0.27 0.75 What kind of a sports team is the Wisconsin Badgers ?
+location 0.0 0.75 Where is Belize located ?
+numeric value 0.05 0.7 How deep is a fathom ?
+location 0.21 0.61 Where can I find the history of the Taiwanese language ?
+entity 0.16 0.64 What are birds descendents of ?
+location 0.01 0.61 Where can I get information concerning child custody files for the State of Utah ?
+entity 0.01 0.67 What kind of animal was Winnie the Pooh ?
+location 0.38 0.83 What is the habitat of the chickadee ?
+abbreviation 0.01 0.68 CNN is an acronym for what ?
+----- human yes/no high but classify not human
+22
+description and abstract concept 0.03 0.69 What does Esa-Pekka Salonen look like ?
+abbreviation 0.01 0.72 What does A&W of root beer fame stand for ?
+entity 0.43 0.61 What little boy and dog live in a shoe ?
+entity 0.39 0.7 What does the policeman become in the Canadian edition of Monopoly ?
+numeric value 0.06 0.68 What is the world record for the longest hair ?
+entity 0.43 0.71 What were Babe Ruth 's Christian names ?
+description and abstract concept 0.41 0.86 What information can you tell me about actor James Cromwell ?
+description and abstract concept 0.0 0.72 What is the Lost Colony ?
+entity 0.01 0.68 What animal causes the biggest threat to humans ?
+entity 0.31 0.73 What is the filmmakers collabrative ?
+description and abstract concept 0.0 0.62 What is the meaning of Jesus ?
+entity 0.49 0.92 What character narrates Treasure Island ?
+description and abstract concept 0.02 0.75 What is a Certified Nurse Midwife ?
+entity 0.0 0.67 What does a collier mine ?
+description and abstract concept 0.03 0.78 Describe the Finnish music personality Salonen 's appearance .
+description and abstract concept 0.06 0.88 What is a geoscientist ?
+description and abstract concept 0.09 0.91 What is a biologist ?
+entity 0.37 0.96 What is the nickname of the famous flyer who mistakenly flew to Ireland instead of to Los Angeles ?
+description and abstract concept 0.02 0.91 What is a philanthropist ?
+description and abstract concept 0.25 0.77 What is Butterfield 8 in Butterfield 8 ?
+
+
+--- turn 5 ---
+```python
+avg = {q: {k: (d[q][k]+d2[q][k])/2 for k in labels} for q in uq}
+c4 = Counter(max(avg[q], key=avg[q].get) for q in qs)
+print(c4)
+# heuristic: "Who is/was X" -> human
+def pred(q):
+    if re.match(r"^(Who|Whom|Whose)\b", q): return 'human being'
+    return max(avg[q], key=avg[q].get)
+c5 = Counter(pred(q) for q in qs)
+print(c5)
+```
+OUTPUT:
+Counter({'numeric value': 965, 'entity': 807, 'human being': 425, 'description and abstract concept': 390, 'location': 315, 'abbreviation': 280})
+Counter({'numeric value': 965, 'entity': 804, 'human being': 428, 'description and abstract concept': 390, 'location': 315, 'abbreviation': 280})
+
+
+--- turn 6 ---
+```python
+FINAL("Answer: description and abstract concept is less common than human being")
+```
+FINAL: Answer: description and abstract concept is less common than human being

@@ -1,0 +1,97 @@
+Query: In the above data, how many data points should be classified as label 'description and abstract concept'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500])
+lines=context.split('\n')
+print(len(lines))
+print(lines[5:15])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[:1500])
+lines=context.split('\n')
+print(len(lines))
+print(lines[5:15])</parameter>
+</invoke>
+```
+
+
+<invoke name="python">
+<parameter name="code">print(context[:1500])
+lines=context.split('\n')
+print(len(lines))
+print(lines[5:15])
+```
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 2 ---
+```python
+print(context[:1500])
+lines = context.split('\n')
+print(len(lines))
+print(lines[5:15])
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+25540
+["Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?", 'Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?', 'Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?', 'Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?', 'Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?', 'Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?', 'Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?', 'Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?', 'Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .', 'Date: Jan 26, 2025 || User: 82900 || Instance: How does hair curl ?']
+
+
+--- turn 3 ---
+```python
+import re
+lines = context.split('\n')
+items = [l.split('Instance: ',1)[1] for l in lines if 'Instance: ' in l]
+print(len(items))
+cats = ['description and abstract concept','numeric value','entity','abbreviation','human being','location']
+codes = {'D':0,'N':1,'E':2,'A':3,'H':4,'L':5}
+def mk(chunk):
+    q = "Classify each question by the type of its answer (TREC style): D = description and abstract concept (definitions, reasons, manner, descriptions), N = numeric value (numbers, dates, counts, money, durations), E = entity (things, animals, objects, foods, events, etc.), A = abbreviation (abbreviation or expansion), H = human being (person/group), L = location.\nReply with exactly one line per question in the form 'index:letter', nothing else.\n\n"
+    return q + "\n".join(f"{i}: {t}" for i,t in enumerate(chunk))
+size = 150
+chunks = [items[i:i+size] for i in range(0,len(items),size)]
+results = []
+for b in range(0,len(chunks),8):
+    prompts = [mk(c) for c in chunks[b:b+8]]
+    results += llm_query_batched(prompts)
+count = 0; parsed = 0
+for c, r in zip(chunks, results):
+    got = dict(re.findall(r'(\d+)\s*:\s*([DNEAHL])', r))
+    parsed += len(got)
+    count += sum(1 for v in got.values() if v == 'D')
+print(len(chunks), parsed, count)
+```
+OUTPUT:
+25531
+171 25531 4323
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: 4323")
+```
+FINAL: Answer: 4323

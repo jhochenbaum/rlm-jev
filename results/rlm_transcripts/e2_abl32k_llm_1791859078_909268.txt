@@ -1,0 +1,308 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 76,803 characters (~19,200 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-5:])
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 29, 2022 || User: 44436 || Instance: What does IOC stand for ?
+Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?
+Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?
+Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?
+Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?
+Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .
+Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?
+Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?
+Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?
+Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?
+Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?
+Date: May 01, 2024 || User: 
+796
+["Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1))
+print(len(qs))
+
+cats = ['location','numeric value','description and abstract concept','abbreviation','human being','entity']
+def mk(chunk):
+    s = ("Classify each question by the type of its answer into exactly one of: 'location', 'numeric value', "
+         "'description and abstract concept', 'abbreviation', 'human being', 'entity'. "
+         "(This is the TREC question classification: entity = things like animals, bodies, colors, creative works, currency, diseases, events, foods, instruments, languages, letters, other objects, plants, products, religions, sports, substances, symbols, techniques, terms, vehicles, words; "
+         "human being = people/groups/titles; description = definitions, manner, reasons; abbreviation = abbreviations and their expansions; numeric = counts, dates, money, etc.; location = places.)\n"
+         "Reply with one line per question in the format 'index: label', nothing else.\n\n")
+    for i,q in chunk: s += f"{i}: {q}\n"
+    return s
+size=50
+chunks=[list(enumerate(qs))[i:i+size] for i in range(0,len(qs),size)]
+prompts=[mk(c) for c in chunks]
+res=[]
+for i in range(0,len(prompts),8):
+    res += llm_query_batched(prompts[i:i+8])
+labels={}
+for r in res:
+    for line in r.split("\n"):
+        m=re.match(r"\s*(\d+)\s*:\s*(.*)",line)
+        if m:
+            t=m.group(2).strip().strip("'\"").lower()
+            for c in cats:
+                if t.startswith(c): labels[int(m.group(1))]=c
+print(len(labels))
+from collections import Counter
+print(Counter(labels.values()))
+```
+OUTPUT:
+787
+760
+Counter({'abbreviation': 170, 'numeric value': 155, 'human being': 124, 'location': 124, 'entity': 97, 'description and abstract concept': 90})
+
+
+--- turn 2 ---
+```python
+missing = [i for i in range(len(qs)) if i not in labels]
+print(len(missing))
+for attempt in range(3):
+    if not missing: break
+    mchunks = [missing[i:i+25] for i in range(0,len(missing),25)]
+    ps = [mk([(i,qs[i]) for i in c]) for c in mchunks]
+    rs = llm_query_batched(ps)
+    for r in rs:
+        for line in r.split("\n"):
+            m = re.match(r"\s*(\d+)\s*:\s*(.*)", line)
+            if m:
+                t = m.group(2).strip().strip("'\"").lower()
+                for c in cats:
+                    if t.startswith(c) and int(m.group(1)) in missing:
+                        labels[int(m.group(1))] = c
+    missing = [i for i in range(len(qs)) if i not in labels]
+    print(attempt, len(missing))
+print(len(labels), Counter(labels.values()))
+```
+OUTPUT:
+27
+0 0
+787 Counter({'abbreviation': 170, 'numeric value': 155, 'human being': 124, 'location': 124, 'description and abstract concept': 117, 'entity': 97})
+
+
+--- turn 3 ---
+```python
+import random
+random.seed(1)
+ab = [i for i,l in labels.items() if l=='abbreviation']
+for i in random.sample(ab,40): print(i, qs[i])
+```
+OUTPUT:
+196 What is DTMF ?
+683 What does the abbreviation AIDS stand for ?
+91 What does U.S.S.R. stand for ?
+349 What does S.O.S. stand for ?
+172 What 's the abbreviation for trinitrotoluene ?
+626 When reading classified ads , what does EENTY : other stand for ?
+573 What is the abbreviation for micro ?
+596 What is the abbreviation of the International Olympic Committee ?
+483 What does IBM stand for ?
+294 In a computer , what does SCSI mean ?
+156 What is SVHS ?
+623 What is the acronym for the National Bureau of Investigation ?
+41 What is IOC an abbreviation of ?
+489 CNN is an acronym for what ?
+536 What is the abbreviation of the company name ` General Motors ' ?
+0 What does IOC stand for ?
+572 What does SIDS stand for ?
+361 What is the correct way to abbreviate cc. at the bottom of a business letter ?
+308 What does U.S.S.R. stand for ?
+158 What does `` B.Y.O.B. '' mean ?
+403 What do the letters D.C. stand for in Washington , D.C. ?
+747 What is LMDS ?
+27 CPR is the abbreviation for what ?
+33 What does NAFTA stand for ?
+668 What is the full form of .com ?
+7 What does IBM stand for ?
+755 What does CNN stand for ?
+300 What does e.g. stand for ?
+532 What is the full form of .com ?
+698 What does NASA stand for ?
+657 What does the acronym CPR mean ?
+301 What does the abbreviation OAS stand for ?
+558 What is p.m. an abbreviation for , as in 5 p.m. ?
+763 What does NASDAQ stand for ?
+309 What is the abbreviated expression for the National Bureau of Investigation ?
+456 What is HDLC ?
+671 What is the abbreviated term used for the National Bureau of Investigation ?
+780 What is the abbreviation of General Motors ?
+580 What is AFS ?
+389 What does G.M.T. stand for ?
+
+
+--- turn 4 ---
+```python
+random.seed(2)
+for cat in ['entity','description and abstract concept']:
+    idx=[i for i,l in labels.items() if l==cat]
+    print("==",cat,len(idx))
+    for i in random.sample(idx,35): print(i, qs[i])
+```
+OUTPUT:
+== entity 97
+76 What 1956 Grace Metalious novel was on the best-seller list for two years ?
+107 What did Englishman John Hawkins begin selling to New World colonists in 1562 ?
+99 What kind of sports team is the Buffalo Sabres ?
+385 What Lewis Carroll book introduced Humpty Dumpty to the world ?
+190 What is in baby powder and baby lotion that makes it smell the way it does ?
+646 What is a camel hair brush actually made out of ?
+342 What do humans catch zoonose diseases from ?
+266 Where does the U.S. get most of its energy ?
+574 What 's the Olympic motto ?
+236 What is DEET ?
+667 What film did Louise Fletcher win the best actress Oscar for ?
+35 What are vermicilli , rigati , zitoni , and tubetti ?
+551 What film was Jude Law in ?
+186 What anesthetic did Queen Victoria allow to be used for the birth of her seventh child , in 1853 ?
+429 What novel has Big Brother watching ?
+611 What kind of fruit is a Yellow Transparent ?
+414 What beer 's name is translated as `` lion brew '' ?
+482 What overalls are named for Dungri , a suburb of Bombay ?
+388 What does the term 3 mean to a newspaper editor ?
+507 What is the meaning of caliente , in English , ?
+430 What constellation contains the twins Castor and Pollux ?
+480 Name four famous cartoon cats .
+272 What product does `` Mrs. Olsen '' promote ?
+696 What is the Motto for the State of Maryland ?
+31 What are Bellworts ?
+737 What do you call a group of geese ?
+445 What kind of hat does Bat Masterson wear ?
+365 Name of King Arthur 's sword ?
+410 What Jules Verne novel features scientists held captive in the submarine Nautilus ?
+427 What Marx Brothers movie centers on a stolen painting ?
+734 What was the name of the sitcom that Alyssa Milano starred in with Tony Danza ?
+195 What product did Robert Conrad dare people to knock off his shoulder ?
+261 What is the name of the 1919 occurrence in which British troops killed over 3 unarmed Indian protestors ?
+249 What 's known as The queen of Drinks ?
+11 What kind of car did Janis Joplin ask the Lord to buy her ?
+== description and abstract concept 117
+213 How does light travel through the void of space if there is no medium for it to ` wave ' or ` pulse ' .
+374 Why does sound travel quicker through water than air ?
+499 Why is the moon different sizes and colors ?
+131 Why do recipe books recommend starting with cold water when you boil something ?
+603 How come light bulbs go out ?
+479 How did former WWF wrestler Rick Rude die ?
+428 For what reason did some San Diego schools stop serving apples ?
+470 How can I call a friend in another country when I do not know the telephone number ?
+765 How is the element strontium purified ?
+630 What is the root of all evil ?
+217 What is the origin of the word assassinate ?
+552 What does the name `` Anthony '' mean ?
+168 What are the Valdez Principles ?
+525 How do I find a snowboarding website ?
+88 What is Candlemas Day ?
+608 What is an aortic abdominal aneurysm ?
+150 Why does a candle need a wick ?
+465 What is Archimedes famous for ?
+679 What does appropriates money mean ?
+425 What is the origin of the ethnic category `` caucasian '' ?
+164 What must a Las Vegas blackjack dealer do when he reaches 16 ?
+451 How do I change a file from an ART file to a JPEG or Bitmap file ?
+148 What 's new in the postal world in 1999 ?
+513 How do they get Teflon to stick to the pan ?
+63 Why shouldn 't you remove a bee stinger with tweezers ?
+563 How do you make the color purple ?
+746 How can I look up someone 's E-mail address on the Internet ?
+192 What is being done about the millennium bug ?
+289 What is Occam 's Razor ?
+591 What is the origin of `` Beauty is in the eye of the beholder '' ?
+324 What is an ecological niche ?
+595 How can I get someone 's email address ?
+598 What does the number 33 on the Rolling Rock beer bottle mean ?
+464 How do ants have sex ?
+166 How would I find the price of different organs that have been donated ?
+
+
+--- turn 5 ---
+```python
+def mk2(chunk):
+    s = ("TREC question classification. For each question decide what kind of answer is expected, choose exactly one label from: "
+         "'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n"
+         "- entity: animals, body parts, colors, creative works (books, films, songs), currency names, diseases, events, foods, drinks, instruments, languages, letters, other objects/things, plants, products, religions, sports, substances, symbols, techniques, terms/names of things, vehicles, words.\n"
+         "- human being: an individual person, group/organization, or title.\n"
+         "- description and abstract concept: definition, manner (how), reason (why), description of something.\n"
+         "- abbreviation: abbreviation or expansion of one.\n"
+         "- numeric value: count, date, money amount, distance, period, size, speed, temperature, percentage, etc.\n"
+         "- location: city, country, state, mountain, other places.\n"
+         "Reply with one line per question in the format 'index: label', nothing else.\n\n")
+    for i,q in chunk: s += f"{i}: {q}\n"
+    return s
+size=30
+allq=list(enumerate(qs))
+chunks2=[allq[i:i+size] for i in range(0,len(allq),size)]
+prompts2=[mk2(c) for c in chunks2]
+res2=[]
+for i in range(0,len(prompts2),8):
+    res2 += llm_query_batched(prompts2[i:i+8])
+labels2={}
+for r in res2:
+    for line in r.split("\n"):
+        m=re.match(r"\s*(\d+)\s*:\s*(.*)",line)
+        if m:
+            t=m.group(2).strip().strip("'\"").lower()
+            for c in cats:
+                if t.startswith(c): labels2[int(m.group(1))]=c
+print(len(labels2), Counter(labels2.values()))
+dis=[i for i in labels2 if labels2[i]!=labels[i]]
+print(len(dis))
+for i in dis:
+    if 'entity' in (labels[i],labels2[i]): print(i, labels[i],'|',labels2[i],'|',qs[i])
+```
+OUTPUT:
+787 Counter({'abbreviation': 168, 'numeric value': 154, 'location': 124, 'human being': 123, 'description and abstract concept': 116, 'entity': 102})
+18
+8 entity | location | Where can I find the names of all the 15 Pokemon ?
+88 description and abstract concept | entity | What is Candlemas Day ?
+103 description and abstract concept | entity | What does the name Shawn mean ?
+114 description and abstract concept | entity | What does JESSICA mean ?
+182 entity | description and abstract concept | What are the cookies in Internet ?
+384 entity | description and abstract concept | What are amphibians ?
+388 entity | description and abstract concept | What does the term 3 mean to a newspaper editor ?
+420 abbreviation | entity | What is DTMF ?
+421 human being | entity | What was the nickname of German flying ace Manfred von Richthofen ?
+506 description and abstract concept | entity | What is a plant supplement ?
+519 numeric value | entity | What brand number graces the black label of a bottle of Jack Daniel 's ?
+540 description and abstract concept | entity | What is the medical condition of hypertension ?
+628 description and abstract concept | entity | What does the name Calder mean ?
+634 entity | description and abstract concept | What is a disaccharide ?
+716 abbreviation | entity | What does the `` c '' stand for in the equation E=mc2 ?
+
+
+--- turn 6 ---
+```python
+final = dict(labels)
+# manual resolution of entity-related disagreements
+override = {
+    8:'location', 88:'description and abstract concept', 103:'description and abstract concept',
+    114:'description and abstract concept', 182:'description and abstract concept',
+    384:'entity', 388:'description and abstract concept', 420:'abbreviation',
+    421:'human being', 506:'description and abstract concept', 519:'numeric value',
+    540:'description and abstract concept', 628:'description and abstract concept',
+    634:'description and abstract concept', 716:'abbreviation'
+}
+final.update(override)
+n = sum(1 for v in final.values() if v=='entity')
+print(n)
+FINAL(f"Answer: {n}")
+```
+FINAL: Answer: 93

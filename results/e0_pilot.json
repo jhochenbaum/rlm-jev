@@ -1,0 +1,142 @@
+{
+ "trec_coarse/B1": {
+  "acc": 0.94,
+  "ece": 0.02,
+  "brier": 0.091,
+  "cnt_err_hard": 0.114,
+  "cnt_err_soft": 0.192
+ },
+ "trec_coarse/B25": {
+  "acc": 0.88,
+  "ece": 0.045,
+  "brier": 0.2,
+  "cnt_err_hard": 0.144,
+  "cnt_err_soft": 0.19
+ },
+ "trec_coarse/B100": {
+  "acc": 0.338,
+  "ece": 0.19,
+  "brier": 0.766,
+  "cnt_err_hard": 0.593,
+  "cnt_err_soft": 0.317
+ },
+ "trec_coarse/B250": {
+  "acc": 0.26,
+  "ece": 0.112,
+  "brier": 0.795,
+  "cnt_err_hard": 0.865,
+  "cnt_err_soft": 0.407
+ },
+ "trec_coarse/B25_rev": {
+  "acc": 0.885,
+  "ece": 0.031,
+  "brier": 0.188,
+  "cnt_err_hard": 0.1,
+  "cnt_err_soft": 0.139
+ },
+ "trec_coarse/in_B1": {
+  "acc": 0.945,
+  "ece": 0.014,
+  "brier": 0.078,
+  "cnt_err_hard": 0.105,
+  "cnt_err_soft": 0.162
+ },
+ "trec_coarse/in_B25": {
+  "acc": 0.95,
+  "ece": 0.022,
+  "brier": 0.077,
+  "cnt_err_hard": 0.095,
+  "cnt_err_soft": 0.161
+ },
+ "trec_coarse/in_B100": {
+  "acc": 0.95,
+  "ece": 0.021,
+  "brier": 0.078,
+  "cnt_err_hard": 0.091,
+  "cnt_err_soft": 0.16
+ },
+ "trec_coarse/in_B250": {
+  "acc": 0.95,
+  "ece": 0.018,
+  "brier": 0.077,
+  "cnt_err_hard": 0.093,
+  "cnt_err_soft": 0.16
+ },
+ "trec_coarse/in_B100_rev": {
+  "acc": 0.965,
+  "ece": 0.014,
+  "brier": 0.059,
+  "cnt_err_hard": 0.067,
+  "cnt_err_soft": 0.124
+ },
+ "spam/B1": {
+  "acc": 0.962,
+  "ece": 0.015,
+  "brier": 0.044,
+  "cnt_err_hard": 0.046,
+  "cnt_err_soft": 0.032
+ },
+ "spam/B25": {
+  "acc": 0.782,
+  "ece": 0.108,
+  "brier": 0.324,
+  "cnt_err_hard": 0.005,
+  "cnt_err_soft": 0.046
+ },
+ "spam/B100": {
+  "acc": 0.602,
+  "ece": 0.091,
+  "brier": 0.462,
+  "cnt_err_hard": 0.483,
+  "cnt_err_soft": 0.051
+ },
+ "spam/B250": {
+  "acc": 0.572,
+  "ece": 0.086,
+  "brier": 0.491,
+  "cnt_err_hard": 0.768,
+  "cnt_err_soft": 0.121
+ },
+ "spam/B25_rev": {
+  "acc": 0.79,
+  "ece": 0.115,
+  "brier": 0.307,
+  "cnt_err_hard": 0.031,
+  "cnt_err_soft": 0.002
+ },
+ "spam/in_B1": {
+  "acc": 0.975,
+  "ece": 0.007,
+  "brier": 0.039,
+  "cnt_err_hard": 0.031,
+  "cnt_err_soft": 0.018
+ },
+ "spam/in_B25": {
+  "acc": 0.97,
+  "ece": 0.014,
+  "brier": 0.039,
+  "cnt_err_hard": 0.031,
+  "cnt_err_soft": 0.017
+ },
+ "spam/in_B100": {
+  "acc": 0.972,
+  "ece": 0.009,
+  "brier": 0.04,
+  "cnt_err_hard": 0.036,
+  "cnt_err_soft": 0.019
+ },
+ "spam/in_B250": {
+  "acc": 0.975,
+  "ece": 0.012,
+  "brier": 0.04,
+  "cnt_err_hard": 0.031,
+  "cnt_err_soft": 0.018
+ },
+ "spam/in_B100_rev": {
+  "acc": 0.98,
+  "ece": 0.015,
+  "brier": 0.036,
+  "cnt_err_hard": 0.0,
+  "cnt_err_soft": 0.002
+ }
+}

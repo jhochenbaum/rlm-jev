@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Lint and format
+        run: |
+          uvx ruff check .
+          uvx ruff format --check .
+      - name: Lockfile is up to date
+        run: uv lock --check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Library tests (offline, fake Jev client)
+        run: uv run --locked --no-default-groups --group dev pytest -q
+
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Rebuild the summary from the committed results
+        run: uv run --locked --no-default-groups --group analysis python experiments/summarize.py
+      - name: Summary matches the committed one
+        run: git diff --exit-code results/summary.json
+      - name: Figures render
+        # Fonts differ by platform, so the images are rebuilt but not compared byte for byte.
+        run: uv run --locked --no-default-groups --group analysis python figures/make_figures.py

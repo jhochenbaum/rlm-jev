@@ -1,0 +1,505 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'entity'? Give your final answer in the form 'Answer: description and abstract concept is [X] entity', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,463,168 characters (~615,792 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+</gr_replace>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </gr_replace>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-500:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Feb 15, 2023 || User: 99586 || Instance: What country claimed Rubens , Van Dyck and Bruegel as citizens ?
+Date: Apr 11, 2022 || User: 12688 || Instance: What actress 's autobiography is titled Shelley : Also Known as Shirley ?
+Date: Sep 26, 2023 || User: 92838 || Instance: What does the E stand for in the equation E=mc2 ?
+Date: Sep 22, 2023 || User: 24181 || Instance: In the Miller Lite TV commercial , who is the creature ?
+Date: May 13, 2022 || User: 14229 || Instance: Who made the most appearances in the center square on Hollywood Squares ?
+Date: Aug 05, 2022 || User: 11569 || Instance: Who was the tallest U.S. president ?
+Date: Sep 02, 2022 || User: 95387 || Instance: The Iraqis launched their attack on Kuwait on what day ?
+Date: Jan 08, 2025 || User: 90917 || Instance: How long do cardinal eggs incubate ?
+Date: May 30, 2023 || User: 15192 || Instance: Who portrayed Prewett in From Here to Eternity ?
+Date: Apr 03, 2024 || User: 25572 || Instance: Name the country which Honecker lived in .
+D
+....
+for ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'numeric value', 'entity', 'abbreviation', 'human being', 'location'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+25540
+
+
+--- turn 2 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r'^Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, date, count, amount, duration, or other numeric value',
+ 'entity': 'answer is a thing/entity such as an animal, product, food, color, sport, body part, event, work, or other non-human object',
+ 'abbreviation': 'answer is an abbreviation or acronym or what one stands for',
+ 'human being': 'answer is a person or group of people',
+ 'location': 'answer is a place such as a country, city, or other location',
+}
+res = jev_classify(uq, labels, instruction="Which category best describes the answer to this question?")
+from collections import Counter
+c = Counter()
+for r in res:
+    c[max(r, key=r.get)] += 1
+print(c)
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 22
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 3 ---
+```python
+import re
+from collections import Counter
+lines = context.split('\n')
+qs = []
+for l in lines:
+    m = re.match(r'^Date: .*? \|\| User: \d+ \|\| Instance: (.*)$', l)
+    if m: qs.append(m.group(1))
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+ 'numeric value': 'answer is a number, date, count, amount, duration, or other numeric value',
+ 'entity': 'answer is a thing/entity such as an animal, product, food, color, sport, body part, event, work, or other non-human object',
+ 'abbreviation': 'answer is an abbreviation or acronym or what one stands for',
+ 'human being': 'answer is a person or group of people',
+ 'location': 'answer is a place such as a country, city, or other location',
+}
+res = jev_classify(uq, labels, instruction="Which category best describes the answer to this question?")
+pred = dict(zip(uq, res))
+c = Counter()
+for q in qs:
+    r = pred[q]
+    c[max(r, key=r.get)] += 1
+print(c)
+```
+OUTPUT:
+25531 4151
+Counter({'abbreviation': 5010, 'human being': 4919, 'description and abstract concept': 4370, 'entity': 4053, 'location': 3676, 'numeric value': 3503})
+
+
+--- turn 4 ---
+```python
+labels2 = {
+ 'description and abstract concept': 'question asks for a definition, description, explanation, reason, manner, or meaning of something (e.g. "What is X?", "Why...", "How do you...")',
+ 'numeric value': 'question asks for a number, date, year, count, money amount, size, speed, duration, or percentage',
+ 'entity': 'question asks for a non-human thing: an animal, food, product, color, sport, body part, plant, substance, event, creative work, language, or word',
+ 'abbreviation': 'question asks for the full expansion of an abbreviation or acronym, or the abbreviation of a term',
+ 'human being': 'question asks who a person is, or which person or group/organization of people',
+ 'location': 'question asks for a place: a country, city, state, mountain, river, or other location',
+}
+res2 = jev_classify(uq, labels2, instruction="What type of answer does this question expect?")
+pred2 = dict(zip(uq, res2))
+c2 = Counter()
+for q in qs:
+    r = pred2[q]
+    c2[max(r, key=r.get)] += 1
+print(c2)
+
+# prior-corrected version
+import numpy as np
+keys = list(labels2)
+P = np.array([[pred2[q][k] for k in keys] for q in qs])
+prior = P.mean(0)
+print(dict(zip(keys, prior.round(3))))
+Pc = P / prior
+c3 = Counter(keys[i] for i in Pc.argmax(1))
+print(c3)
+# abbreviation samples
+ab = [q for q in uq if max(pred2[q], key=pred2[q].get)=='abbreviation'][:15]
+for q in ab: print(q)
+```
+OUTPUT:
+Counter({'description and abstract concept': 5455, 'human being': 4831, 'abbreviation': 4166, 'entity': 3800, 'location': 3787, 'numeric value': 3492})
+{'description and abstract concept': np.float64(0.218), 'numeric value': np.float64(0.137), 'entity': np.float64(0.152), 'abbreviation': np.float64(0.159), 'human being': np.float64(0.19), 'location': np.float64(0.145)}
+Counter({'description and abstract concept': 5162, 'human being': 4804, 'abbreviation': 4360, 'entity': 3910, 'location': 3791, 'numeric value': 3504})
+What does HIV stand for ?
+What is the abbreviation of the National Bureau of Investigation ?
+What does INRI stand for when used on Jesus ' cross ?
+What does ` PSI ' stand for ?
+CPR is the abbreviation for what ?
+What does S.O.S. stand for ?
+What is the abbreviation of the International Olympic Committee ?
+What does NASDAQ stand for ?
+What do the letters D.C. stand for in Washington , D.C. ?
+What is the acronym for the National Bureau of Investigation ?
+In a computer , what does SCSI mean ?
+What does `` B.Y.O.B. '' mean ?
+What is the full form of .com ?
+What does Ms. , Miss , and Mrs. stand for ?
+What does the channel ESPN stand for ?
+
+
+--- turn 5 ---
+```python
+import random
+random.seed(1)
+cnt = Counter(qs)
+def top(pr, lab): return max(pr, key=pr.get)==lab
+d2 = [q for q in uq if top(pred2[q],'description and abstract concept')]
+e2 = [q for q in uq if top(pred2[q],'entity')]
+print("DESC sample (labels2)")
+for q in random.sample(d2,25): print(cnt[q], q)
+print("ENTY sample (labels2)")
+for q in random.sample(e2,25): print(cnt[q], q)
+# disagreements between runs involving desc/entity
+dis = [q for q in uq if max(pred[q],key=pred[q].get)!=max(pred2[q],key=pred2[q].get)
+       and {max(pred[q],key=pred[q].get),max(pred2[q],key=pred2[q].get)} & {'entity','description and abstract concept'}]
+print(len(dis))
+for q in random.sample(dis,25): print(cnt[q], max(pred[q],key=pred[q].get),'|',max(pred2[q],key=pred2[q].get),'|',q)
+```
+OUTPUT:
+DESC sample (labels2)
+3 What are amphibians ?
+5 How do I find the balance of my social security account ?
+5 Define the Pheonix Club ?
+4 How would I find the price of different organs that have been donated ?
+4 What is the meaning of the name Kathryn ?
+5 What is a leper ?
+4 How do boats float ?
+5 What is magnetar ?
+65 What is DTMF ?
+5 What is the origin of gametophytic tissue ?
+4 What is the difference between a college and a university ?
+5 What does the technique called `` cold fusion '' produce ?
+64 What does NN O `` mean when used as a prefix in Irish surnames ?
+64 What is RAM in the computer ?
+4 What was the importance of Magellan ?
+5 What is swap math ?
+3 How do you ask a total stranger out on a date ?
+5 What does the double-O indicate in 007 ?
+5 How does food color affect how you think it will taste ?
+4 How can you prevent it ?
+3 What is the weather like on the moon ?
+65 What is HTML ?
+5 Why shouldn 't you remove a bee stinger with tweezers ?
+4 What is a nanometer ?
+5 What is a person 's socioeconomic position ?
+ENTY sample (labels2)
+5 What is the occupation of Nicholas Cage ?
+5 Name the operating system that runs on IBM-compatible machines .
+4 What is the West Virginia state animal ?
+3 Name the men 's cologne that is associated with the sea .
+5 What is the celtic symbol for `` life '' ?
+5 What line of candy products included Super Skrunch and Peanut Butter Oompas ?
+4 What 2 statues did France give to other countries ?
+6 What college football team did Knute Rockne build into a power ?
+5 What food did Marco Polo introduce into Italy from the court of Kubla Khan ?
+5 What 's the Hungarian word for pepper ?
+5 What D.H. Lawrence novel was originally titled Tenderness ?
+5 What ill-fated craft was captained by Ernst Lehmann ?
+4 What 1965 film had Jack Lemmon portraying a cartoonist ?
+5 Name the disposable razor that `` costs about 19 cents . ''
+5 What is the name of David Letterman 's dog ?
+5 What drug is often used to treat AIDS patients ?
+5 What was Mel Gibson 's first movie ?
+5 What game does Garry Kasparov play ?
+5 What film did Lee Marvin win the 1965 best actor Oscar for ?
+5 What facial feature typically contains about 55 hairs ?
+5 What were the first frozen foods ?
+4 What common plant has a button , cap , cup , gills , and ring ?
+5 What children 's tale contains the line : `` Come , Cinderslut , and hold this skein of wool for me '' ?
+5 What book does Holden Caulfield appear in ?
+5 What is the oldest ethnological museum in the world ?
+211
+65 abbreviation | description and abstract concept | What is DTMF ?
+4 human being | entity | What TV family sometimes buys eclairs from Nelson 's Bakery ?
+6 human being | entity | What girl 's name is `` Teddy '' an affectionate form of ?
+5 human being | description and abstract concept | What is the origin of `` Beauty is in the eye of the beholder '' ?
+4 description and abstract concept | entity | What direction do most baseball pitchers pitch toward ?
+5 numeric value | description and abstract concept | How can I find out what year a Beanie Baby was introduced ?
+5 human being | entity | What is the nickname of the famous flyer who mistakenly flew to Ireland instead of to Los Angeles ?
+5 entity | description and abstract concept | What is the Peloponnesian League ?
+62 abbreviation | description and abstract concept | What is SAP ?
+6 entity | location | What man-made waterways is 1.76 miles long ?
+5 entity | description and abstract concept | What was The Living Room War ?
+5 entity | description and abstract concept | What is the `` coppertop '' battery ?
+6 human being | entity | In the movie Groundshog Day what is the name of the character played by Andie MacDowell ?
+5 description and abstract concept | entity | What kind of greeting is appropriate to send on Yom Kippur ?
+6 entity | location | What river runs through Colorado , Kansas , and Oklahoma ?
+4 human being | entity | What was Mao 's second name ?
+6 entity | human being | What party was Winston Churchill a member of ?
+65 abbrev
+...[truncated 630 chars]
+
+--- turn 6 ---
+```python
+cnt = Counter(qs)
+hi = [(n,q) for q,n in cnt.items() if n>=20]
+print(len(hi), sum(n for n,_ in hi))
+hist = Counter(cnt.values())
+print(sorted(hist.items()))
+for n,q in sorted(hi, reverse=True)[:150]:
+    p1=max(pred[q],key=pred[q].get); p2=max(pred2[q],key=pred2[q].get)
+    print(n, '|', p1[:5], '|', p2[:5], '|', q)
+```
+OUTPUT:
+81 5195
+[(1, 1), (2, 20), (3, 140), (4, 826), (5, 1927), (6, 1156), (62, 7), (63, 10), (64, 29), (65, 35)]
+65 | abbre | descr | When reading classified ads , what does EENTY : other stand for ?
+65 | abbre | abbre | What is the acronym for the rating system for air conditioner efficiency ?
+65 | abbre | abbre | What is the acronym for the National Bureau of Investigation ?
+65 | abbre | abbre | What is the abbreviation of the company name ` General Motors ' ?
+65 | abbre | abbre | What is the abbreviation of the National Bureau of Investigation ?
+65 | abbre | abbre | What is the abbreviation for micro ?
+65 | abbre | abbre | What is the abbreviation for Original Equipment Manufacturer ?
+65 | abbre | abbre | What is the abbreviated term used for the National Bureau of Investigation ?
+65 | abbre | abbre | What is the abbreviated expression for the National Bureau of Investigation ?
+65 | abbre | abbre | What is p.m. an abbreviation for , as in 5 p.m. ?
+65 | descr | descr | What is HTML ?
+65 | abbre | descr | What is HDLC ?
+65 | abbre | descr | What is DTMF ?
+65 | abbre | descr | What is DEET ?
+65 | abbre | descr | What is BPH ?
+65 | abbre | descr | What is AFS ?
+65 | abbre | abbre | What does the channel ESPN stand for ?
+65 | abbre | abbre | What does the acronym CPR mean ?
+65 | abbre | abbre | What does the abbreviation cwt. ?
+65 | abbre | descr | What does the E stand for in the equation E=mc2 ?
+65 | abbre | abbre | What does e.g. stand for ?
+65 | abbre | abbre | What does ` PSI ' stand for ?
+65 | abbre | abbre | What does SHIELD stand for ?
+65 | abbre | abbre | What does S.O.S. stand for ?
+65 | abbre | abbre | What does RCA stand for ?
+65 | abbre | abbre | What does R.E.M. stand for , as in the rock group R.E.M. ?
+65 | abbre | abbre | What does NAFTA stand for ?
+65 | abbre | abbre | What does MSG stand for ?
+65 | abbre | abbre | What does INRI stand for when used on Jesus ' cross ?
+65 | abbre | abbre | What does G.M.T. stand for ?
+65 | abbre | abbre | What does BUD stand for ?
+65 | abbre | abbre | What does BTU mean ?
+65 | abbre | abbre | What does BMW stand for ?
+65 | abbre | abbre | What 's the abbreviation for trinitrotoluene ?
+65 | abbre | abbre | In a computer , what does SCSI mean ?
+64 | abbre | abbre | What is the full form of .com ?
+64 | abbre | abbre | What is the correct way to abbreviate cc. at the bottom of a business letter ?
+64 | abbre | abbre | What is the abbreviation of the International Olympic Committee ?
+64 | abbre | abbre | What is the abbreviation of General Motors ?
+64 | abbre | descr | What is SVHS ?
+64 | abbre | abbre | What is RCD ?
+64 | abbre | descr | What is RAM in the computer ?
+64 | abbre | descr | What is LMDS ?
+64 | abbre | abbre | What is IOC an abbreviation of ?
+64 | abbre | abbre | What does the abbreviation OAS stand for ?
+64 | abbre | abbre | What does the abbreviation AIDS stand for ?
+64 | abbre | descr | What does the `` c '' stand for in the equation E=mc2 ?
+64 | abbre | abbre | What does the T.S. stand for in T.S. Eliot 's name ?
+64 | abbre | abbre | What does snafu stand for ?
+64 | abbre | abbre | What does U.S.S.R. stand for ?
+64 | abbre | abbre | What does SIDS stand for ?
+64 | descr | descr | What does NN O `` mean when used as a prefix in Irish surnames ?
+64 | abbre | abbre | What does NASA stand for ?
+64 | descr | descr | What does JESSICA mean ?
+64 | abbre | abbre | What does IQ stand for ?
+64 | abbre | abbre | What does IBM stand for ?
+64 | abbre | abbre | What does HIV stand for ?
+64 | abbre | abbre | What does CPR stand for ?
+64 | abbre | abbre | What do the letters ZIP stand for in the phrase `` ZIP code '' ?
+64 | abbre | abbre | What do the letters D.C. stand for in Washington , D.C. ?
+64 | abbre | abbre | What do the letters CE stand for on so many products , particularly electrical , purchased now ?
+64 | abbre | abbre | What 's the abbreviation for limited partnership ?
+64 | abbre | abbre | CNN is the abbreviation for what ?
+64 | abbre | abbre | CNN is an acronym for what ?
+63
+...[truncated 898 chars]
+
+--- turn 7 ---
+```python
+hi_set = {q for q,n in cnt.items() if n>=20}
+# tally predicted labels for high-count ones (pred2 and pred) weighted by count
+for name,pp in [('pred',pred),('pred2',pred2)]:
+    ch = Counter()
+    for q in hi_set: ch[max(pp[q],key=pp[q].get)] += cnt[q]
+    print(name, ch)
+# list high-count ones predicted desc/entity in either
+for q in sorted(hi_set, key=lambda q:-cnt[q]):
+    a=max(pred[q],key=pred[q].get); b=max(pred2[q],key=pred2[q].get)
+    if a!='abbreviation' or b!='abbreviation':
+        print(cnt[q], a[:5], b[:5], q)
+```
+OUTPUT:
+pred Counter({'abbreviation': 5002, 'description and abstract concept': 193})
+pred2 Counter({'abbreviation': 4166, 'description and abstract concept': 1029})
+65 abbre descr What is DEET ?
+65 abbre descr What is DTMF ?
+65 abbre descr What does the E stand for in the equation E=mc2 ?
+65 abbre descr What is AFS ?
+65 descr descr What is HTML ?
+65 abbre descr What is BPH ?
+65 abbre descr What is HDLC ?
+65 abbre descr When reading classified ads , what does EENTY : other stand for ?
+64 descr descr What does JESSICA mean ?
+64 abbre descr What is RAM in the computer ?
+64 abbre descr What is SVHS ?
+64 abbre descr What does the `` c '' stand for in the equation E=mc2 ?
+64 abbre descr What is LMDS ?
+64 descr descr What does NN O `` mean when used as a prefix in Irish surnames ?
+63 abbre descr What is DSL ?
+62 abbre descr What is SAP ?
+
+
+--- turn 8 ---
+```python
+import numpy as np
+lo = [q for q in uq if cnt[q] < 20]
+print(len(lo), sum(cnt[q] for q in lo))
+
+variants = []
+variants.append((labels, "Which category best describes the answer to this question?"))
+variants.append((labels2, "What type of answer does this question expect?"))
+labels3 = {
+ 'description and abstract concept': 'the answer is a definition, a description, a reason, a manner/way of doing something, or the meaning of something',
+ 'numeric value': 'the answer is a number, date, money, distance, weight, period of time, or other numeric value',
+ 'entity': 'the answer is a named thing that is not a person or place: an animal, food, product, body part, color, sport, plant, disease, vehicle, instrument, film, book, language, word, or event',
+ 'abbreviation': 'the answer is an abbreviation or its expansion',
+ 'human being': 'the answer is a specific individual, a group of people, an organization, or a description of a person',
+ 'location': 'the answer is a city, country, state, mountain, river, lake, or other place',
+}
+variants.append((labels3, "This is a TREC question classification task. Choose the coarse answer type of the question."))
+variants.append((labels3, "What kind of thing does the answer to this question refer to?"))
+
+keys = list(labels)
+allP = []
+for lab, ins in variants:
+    r = jev_classify(lo, lab, instruction=ins)
+    allP.append(np.array([[x[k] for k in keys] for x in r]))
+W = np.array([cnt[q] for q in lo])
+for P in allP:
+    am = P.argmax(1)
+    print({keys[i]: int(W[am==i].sum()) for i in range(6)})
+Pm = np.mean(allP, axis=0)
+am = Pm.argmax(1)
+print('ens', {keys[i]: int(W[am==i].sum()) for i in range(6)})
+print('soft', {keys[i]: round(float((Pm[:,i]*W).sum())) for i in range(6)})
+```
+OUTPUT:
+4070 20336
+{'description and abstract concept': 4177, 'numeric value': 3503, 'entity': 4053, 'abbreviation': 8, 'human being': 4919, 'location': 3676}
+{'description and abstract concept': 4426, 'numeric value': 3492, 'entity': 3800, 'abbreviation': 0, 'human being': 4831, 'location': 3787}
+{'description and abstract concept': 4411, 'numeric value': 3504, 'entity': 3637, 'abbreviation': 0, 'human being': 5010, 'location': 3774}
+{'description and abstract concept': 3770, 'numeric value': 3501, 'entity': 4200, 'abbreviation': 0, 'human being': 5143, 'location': 3722}
+ens {'description and abstract concept': 4294, 'numeric value': 3503, 'entity': 3812, 'abbreviation': 0, 'human being': 4942, 'location': 3785}
+soft {'description and abstract concept': 4120, 'numeric value': 3496, 'entity': 4052, 'abbreviation': 29, 'human being': 4962, 'location': 3676}
+
+
+--- turn 9 ---
+```python
+random.seed(7)
+keys = list(labels)
+iD, iE = keys.index('description and abstract concept'), keys.index('entity')
+amv = np.array([P.argmax(1) for P in allP])  # 4 x N
+close = [i for i in range(len(lo)) if ((amv[:,i]==iD).any() and (amv[:,i]==iE).any())]
+print(len(close), sum(W[i] for i in close))
+for i in random.sample(close, 60):
+    print(W[i], ''.join('D' if a==iD else 'E' if a==iE else '.' for a in amv[:,i]), lo[i])
+```
+OUTPUT:
+173 812
+5 EDDE What was the Chivington Massacre ?
+5 DDDE What is Candlemas Day ?
+5 DEED What 's the motto of the Boy Scouts ?
+5 DDDE What is Java ?
+5 DDEE What is the origin of the typing practice sentence `` Now is the time for all good men to come to the aid of their country '' ?
+4 EDDE What is Tetrinet ?
+5 DDDE What is a glory hole ?
+4 EDDE What is titanium ?
+4 DDDE What is a bourdon tube ?
+5 DDDE What is a transistor ?
+5 DEEE What did Mighty Mouse always sing as he went into action ?
+5 DDDE What is crabgrass ?
+4 DEEE What clause in the U.S. Constitution may not be changed , altered or amended ?
+5 EDEE What are vermicilli , rigati , zitoni , and tubetti ?
+5 EDDE What is Olestra ?
+5 DDDE What are the Greek numerals ?
+4 DDDE What do a diamond and lump of coal have in common ?
+5 EDDE What is magnetar ?
+5 EDEE What was The Living Room War ?
+5 DEEE What is Steve Rogers 's profession when he 's not Captain America ?
+4 DDDE What was the Vietnam War ?
+4 DEEE What was the distinguishing mark on the `` Little Rascals '' dog ?
+4 DDDE What is a conifer ?
+4 DDDE What are the side effects of mevacor ?
+5 DEDE What did the only repealed amendment to the U.S. Constitution deal with ?
+5 EDDE What is Spumante ?
+6 DEEE What is the state nickname of Mississippi ?
+5 DEEE What term does a Czech use to describe a Pole ?
+5 DEEE What chess outcome results when a player has no legal move ?
+4 DEEE What are the seven virtues ?
+5 EDDE What is saltpeter ?
+5 EDDE What is a Devo hat ?
+5 EDDE What do the figures represent on the Easter Island ?
+4 EDDE What is the Milky Way ?
+5 EDDE What are Maid-Rites ?
+4 DEEE What were the three prophecies the witches make to Macbeth ?
+3 EDDE What is a Chinese `` spouting '' bowl ?
+5 DDDE What is a wart ?
+5 DEEE What title did Shevardnadze have during the Soviet era ?
+5 .DDE What is the origin of `` Beauty is in the eye of the beholder '' ?
+5 DDDE What is thalassemia ?
+5 DEDD What does Choo Choo Charlie say ?
+4 DDDE How do you say I love you in Spanish ?
+5 DDEE What are the seven deadly sins ?
+4 DEEE What was the rallying cry of the early American revolutionaries ?
+5 DEED What 's the Olympic motto ?
+5 DEEE What was the proper Laugh-In respones to : `` Say goodnight , Dick '' ?
+5 EDEE What are Cobol , Fortran , and Pascal ?
+5 EDDE What causes tuberculosis ?
+5 DDDE What is the orgin of xoxoxox ?
+5 DDDE What 's a water funnel ?
+5 EDDE What are Bellworts ?
+5 EDDE What is paracetamol ?
+4 DEEE What is an example of an actual case of using the Fourteenth Amendment ?
+5 EEDE What is in baby powder and baby lotion that makes it smell the way it does ?
+5 EDDE What is platinum ?
+5 DDDE What are boxcars ?
+5 EDDE What is `` the washed vodka '' ?
+5 EDDE What is a meerkat ?
+5 EDDE What is osteichthyes ?
+

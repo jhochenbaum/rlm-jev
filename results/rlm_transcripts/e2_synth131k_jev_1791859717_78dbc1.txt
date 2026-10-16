@@ -1,0 +1,77 @@
+Query: In the above data, is label 'numeric value' more common, less common, or the same frequency as label 'location'? Give your final answer in the form 'Answer: numeric value is [X] location', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+```python
+print(context[:1000])
+lines = context.split("\n")
+print(len(lines))
+print(lines[-3:])
+```
+OUTPUT:
+The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did
+3191
+['You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+data = [l for l in lines if l.startswith("Date:") and "|| Instance:" in l]
+print(len(data))
+insts = [l.split("|| Instance:",1)[1].strip() for l in data]
+uniq = list(set(insts))
+print(len(uniq))
+labels = {
+ 'numeric value': 'answer is a number, count, date, money, measurement, percentage, etc.',
+ 'entity': 'answer is a thing, animal, product, food, body part, color, event, language, etc.',
+ 'human being': 'answer is a person, group of people, or organization/individual',
+ 'location': 'answer is a place: city, country, state, mountain, river, etc.',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'description and abstract concept': 'answer is a definition, description, manner, reason, or abstract concept',
+}
+res = jev_classify(uniq, labels, instruction="What type of answer does this question ask for?")
+from collections import Counter
+m = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+c = Counter(m[q] for q in insts)
+print(c)
+FINAL_c = c
+```
+OUTPUT:
+3182
+2692
+Counter({'entity': 632, 'description and abstract concept': 620, 'location': 526, 'abbreviation': 506, 'human being': 498, 'numeric value': 400})
+
+
+--- turn 2 ---
+```python
+yn_num = jev_yesno(uniq, "Is the answer to this question a number, quantity, date, amount, or measurement?")
+yn_loc = jev_yesno(uniq, "Is the answer to this question a location (city, country, state, river, mountain, place)?")
+nm = {q: p for q, p in zip(uniq, yn_num)}
+lm = {q: p for q, p in zip(uniq, yn_loc)}
+n_num = sum(nm[q] > 0.5 for q in insts)
+n_loc = sum(lm[q] > 0.5 for q in insts)
+print(n_num, n_loc)
+print(sum(nm[q] for q in insts), sum(lm[q] for q in insts))
+```
+OUTPUT:
+414 518
+545.0199999999938 617.829999999987
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: numeric value is less common than location")
+```
+FINAL: Answer: numeric value is less common than location

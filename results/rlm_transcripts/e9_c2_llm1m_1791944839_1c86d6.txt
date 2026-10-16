@@ -1,0 +1,147 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: human being is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 2,486,714 characters (~621,678 tokens). First 300 chars:
+"The following lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.\n\nYou will be asked to answer questions abou"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[300:1500]); print(context[-500:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[300:1500])
+print(context[-500:])
+```
+OUTPUT:
+t the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 04, 2023 || User: 24937 || Instance: What are the most common causes of death in the U.S. ?
+Date: Apr 13, 2022 || User: 24926 || Instance: What 19th-century painter died in the Marquesas Islands ?
+Date: Dec 24, 2022 || User: 79525 || Instance: What does NASDAQ stand for ?
+Date: Mar 22, 2022 || User: 44771 || Instance: How many tenths of the Earth 's surface lie under water ?
+Date: Jun 02, 2025 || User: 40066 || Instance: Who famously rode to warn the people of Massachusetts that the British were coming ?
+Date: Jun 18, 2022 || User: 33915 || Instance: Who was the first Taiwanese President ?
+Date: Feb 11, 2025 || User: 60605 || Instance: How much time does the blinking of an eye take ?
+Date: Mar 17, 2025 || User: 93915 || Instance: How long is human gestation ?
+Date: Nov 18, 2022 || User: 28441 || Instance: Who is Karenna Gore , Al Gore 's oldest daughter , married to ?
+Date: Jun 23, 2023 || User: 78131 || Instance: How much do drugs to treat tuberculosis cost ?
+Date: May 25, 2023 || User: 5
+ of ?
+Recall: the preceding lines contain 25531 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'human being', 'entity', 'abbreviation', 'location', 'description and abstract concept', 'numeric value'.
+
+You will be asked to answer questions about the aggregate label statistics across all 25531 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines = context.split("\n")
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m: qs.append(m.group(1))
+print(len(qs))
+
+cats = {'H':'human being','E':'entity','A':'abbreviation','L':'location','D':'description and abstract concept','N':'numeric value'}
+def mk(chunk):
+    s = ("Classify each question by the type of its answer into one of: H=human being, E=entity, A=abbreviation (incl. what does X stand for / abbreviation of), "
+         "L=location, D=description and abstract concept, N=numeric value. Reply with exactly one line per question formatted 'index:letter', nothing else.\n\n")
+    s += "\n".join(f"{i}: {q}" for i,q in enumerate(chunk))
+    return s
+B = 150
+chunks = [qs[i:i+B] for i in range(0,len(qs),B)]
+res = []
+for i in range(0,len(chunks),8):
+    res += llm_query_batched([mk(c) for c in chunks[i:i+8]])
+from collections import Counter
+cnt = Counter()
+for c,r in zip(chunks,res):
+    got = dict(re.findall(r"(\d+)\s*:\s*([HEALDN])", r))
+    for i in range(len(c)):
+        cnt[got.get(str(i),'?')] += 1
+print(cnt)
+```
+OUTPUT:
+25531
+Counter({'N': 5400, 'E': 4909, 'L': 4244, 'A': 3994, 'D': 3677, 'H': 3307})
+
+
+--- turn 3 ---
+```python
+import re
+ab = [q for q in qs if re.search(r"\bstand(s)? for\b|abbreviat|acronym|\bshort for\b|initials", q, re.I)]
+hum = [q for q in qs if re.match(r"\s*(Who|Whom|Whose)\b", q, re.I)]
+print(len(ab), len(hum))
+print(ab[:5])
+```
+OUTPUT:
+3062 1880
+['What does NASDAQ stand for ?', 'What is the acronym for the rating system for air conditioner efficiency ?', 'What does BUD stand for ?', 'What does e.g. stand for ?', 'What does G.M.T. stand for ?']
+
+
+--- turn 4 ---
+```python
+labels = []
+for c,r in zip(chunks,res):
+    got = dict(re.findall(r"(\d+)\s*:\s*([HEALDN])", r))
+    for i in range(len(c)):
+        labels.append(got.get(str(i),'?'))
+abre = re.compile(r"\bstand(s)? for\b|abbreviat|acronym|\bshort for\b|initials", re.I)
+A_llm_noreg = [q for q,l in zip(qs,labels) if l=='A' and not abre.search(q)]
+reg_notA = [q for q,l in zip(qs,labels) if l!='A' and abre.search(q)]
+print(len(A_llm_noreg), len(reg_notA))
+import random
+random.seed(1)
+for q in random.sample(A_llm_noreg,25): print('A?',q)
+for q in random.sample(reg_notA,10): print('reg',q)
+```
+OUTPUT:
+948 16
+A? What is the full form of .com ?
+A? What is DSL ?
+A? What does `` B.Y.O.B. '' mean ?
+A? What does NN O `` mean when used as a prefix in Irish surnames ?
+A? What is BPH ?
+A? What is the full form of .com ?
+A? What is RAM in the computer ?
+A? What is LMDS ?
+A? In a computer , what does SCSI mean ?
+A? What does `` B.Y.O.B. '' mean ?
+A? What does LOL mean ?
+A? What is SAP ?
+A? What is HDLC ?
+A? What is AFS ?
+A? In a computer , what does SCSI mean ?
+A? What is RCD ?
+A? What does JESSICA mean ?
+A? What is HDLC ?
+A? What is SVHS ?
+A? What is DSL ?
+A? What does the word LASER mean ?
+A? What is BPH ?
+A? What is RAM in the computer ?
+A? What does the word LASER mean ?
+A? What is DEET ?
+reg What is the correct way to abbreviate cc. at the bottom of a business letter ?
+reg What does the `` c '' stand for in the equation E=mc2 ?
+reg What is the correct way to abbreviate cc. at the bottom of a business letter ?
+reg What do the red-and-white stripes on a barbershop pole stand for ?
+reg Why is the word `` abbreviation '' so long ?
+reg Why is the word `` abbreviation '' so long ?
+reg What fast-food magnate 's initials graced the left sleeve of the San Diego Padres ' baseball uniforms in 1984 ?
+reg What is the correct way to abbreviate cc. at the bottom of a business letter ?
+reg What do the red-and-white stripes on a barbershop pole stand for ?
+reg Why is the word `` abbreviation '' so long ?
+
+
+--- turn 5 ---
+```python
+FINAL("Answer: human being is less common than abbreviation")
+```
+FINAL: Answer: human being is less common than abbreviation

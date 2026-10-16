@@ -1,0 +1,188 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: human being is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+print(context[:1200])
+print(lines[-5:])
+```
+OUTPUT:
+796
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: 
+["Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.", '', 'You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 1 ---
+```python
+import re
+items = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)$", l)
+    if m:
+        items.append(m.group(1))
+print(len(items))
+uniq = list(dict.fromkeys(items))
+print(len(uniq))
+labels = {
+ 'location': 'the answer is a place, such as a country, city, or landmark',
+ 'human being': 'the answer is a person or group of people, such as an individual, occupation, or organization of people',
+ 'entity': 'the answer is a thing, animal, food, product, object, creative work, or other concrete entity',
+ 'abbreviation': 'the answer is an abbreviation or expansion of an acronym or abbreviation',
+ 'numeric value': 'the answer is a number, date, quantity, measurement, money, or count',
+ 'description and abstract concept': 'the answer is a description, definition, explanation, reason, or abstract concept',
+}
+res = jev_classify(uniq, labels, instruction="What category does the answer to this question belong to?")
+from collections import Counter
+pred = {q: max(r, key=r.get) for q, r in zip(uniq, res)}
+cnt = Counter(pred[q] for q in items)
+print(cnt)
+```
+OUTPUT:
+787
+732
+Counter({'entity': 172, 'human being': 151, 'abbreviation': 124, 'description and abstract concept': 123, 'numeric value': 117, 'location': 100})
+
+
+--- turn 2 ---
+```python
+abbr = [q for q in items if pred[q]=='abbreviation']
+kw = re.compile(r"stand for|abbreviat|acronym|initials|short for|stands for|mean\b", re.I)
+non = [q for q in abbr if not kw.search(q)]
+print(len(abbr), len(non))
+for q in non[:40]: print(q)
+hum = [q for q in items if pred[q]=='human being']
+print([q for q in hum if kw.search(q)][:10])
+# also abbreviation-like questions not predicted abbreviation
+miss = [q for q in items if kw.search(q) and pred[q]!='abbreviation']
+print(len(miss))
+for q in miss[:30]: print(pred[q], '|', q)
+```
+OUTPUT:
+124 20
+What is AFS ?
+What is SVHS ?
+What is the full form of .com ?
+What is HDLC ?
+What is SAP ?
+What is DEET ?
+What is BPH ?
+What is DEET ?
+What is DTMF ?
+What is AFS ?
+What is RAM in the computer ?
+What is RCD ?
+What is the full name of the PLO ?
+What is HDLC ?
+What is DSL ?
+What is LMDS ?
+What is SAP ?
+What is BPH ?
+What is DTMF ?
+What is LMDS ?
+[]
+15
+description and abstract concept | What does the E stand for in the equation E=mc2 ?
+description and abstract concept | What does `` intractable plantar keratoma '' mean ?
+description and abstract concept | What does JESSICA mean ?
+description and abstract concept | What does the E stand for in the equation E=mc2 ?
+description and abstract concept | What does the `` c '' stand for in the equation E=mc2 ?
+description and abstract concept | What does `` Semper Fidelis '' mean ?
+description and abstract concept | What does the name Kelly mean ?
+description and abstract concept | What does idle mean ?
+description and abstract concept | What does JESSICA mean ?
+description and abstract concept | When reading classified ads , what does EENTY : other stand for ?
+description and abstract concept | What does NN O `` mean when used as a prefix in Irish surnames ?
+description and abstract concept | What does the word affiant mean ?
+description and abstract concept | What does Venus Retrograde mean ?
+description and abstract concept | When reading classified ads , what does EENTY : other stand for ?
+description and abstract concept | What does the name `` Justin '' mean ?
+
+
+--- turn 3 ---
+```python
+hum = [q for q in items if pred[q]=='human being']
+nonwho = [q for q in hum if not re.match(r"(Who|Whose|Whom)\b", q)]
+print(len(hum), len(nonwho))
+for q in nonwho[:50]: print(q)
+# abbreviation-labelled that are likely wrong
+print([q for q in abbr if re.match(r"(Who|Where|How)\b", q)][:10])
+# probable abbreviation items missed (stand for / abbreviation phrasing) 
+miss_abbr = [q for q in items if re.search(r"stand for|abbreviat|acronym|initials", q, re.I) and pred[q]!='abbreviation']
+print(len(miss_abbr))
+```
+OUTPUT:
+151 72
+What Cherokee Indian gave his name to a tree ?
+What is a neurosurgeon ?
+In Dana 's `` Two Years Before the Mast , '' what seafarers lived in an abandoned oven on the beach at San Diego ?
+Which Vietnamese terrorist is now a UN delegate in Doonesbury ?
+What well-known actor is the father of star Alan Alda ?
+What engineer invented the pull-tab can ?
+Name the scar-faced bounty hunter of The Old West .
+Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+What Pulitzer Prize-winning novelist ran for mayor of New York City ?
+What celebrity couple , when going through a divorce , divided their toilet paper into two equal piles ?
+Name of the lady the Great Gatsby pines for ?
+What President was meant for , but never placed in , the empty crypt beneath the capital 's rotunda ?
+What bestselling modern poet was the co-founder of the famous City Lights Bookshop in San Francisco ?
+What was the name of the Titanic 's captain ?
+What painter popularized soup cans and Brillo soap pad boxes ?
+What is a geoscientist ?
+What kind of women gave Sigmund Freud erotic dreams ?
+What Apollo 11 astronaut minded the store while Armstrong and Aldrin made history ?
+What mayor made so many TV appearances he was asked to join AFTRA in 1984 ?
+What are the characters ' names in the Scooby-Doo cartoon ?
+What actor has a tattoo on his right wrist reading Scotland Forever ?
+What famous singing cowboy owns the California Angels baseball team ?
+What 1920s cowboy star rode Tony the Wonder Horse ?
+Name the first Russian astronaut to do a spacewalk .
+What baseball player was known as Charley Hustle ?
+What presidential press secretary dismissed Watergate as a third-rate burglary attempt ?
+What are the first names of the famous husband-and-wife acting team of Lunt and Fontanne ?
+What President hit the jogging paths to enhance his athletic image and , sporting No. 39 , almost collapsed during the road race ?
+What is the name of the pop singer whose song became the theme song for a brand of catsup ?
+What poet wrote : `` ... I have promises to keep , and miles to go before I sleep '' ?
+What Democratic prankster waved the train out of the station while Richard Nixon spoke from the caboose ?
+What famous British actor lost his voice after an operation in 1966 ?
+What U.S. vice-president once declared : `` If you 've seen one slum , you 've seen them all '' ?
+What Spanish artist painted Crucifixion ?
+What wild and crazy guy wrote a book called Cruel Shoes ?
+Name the two actress daughters of John Mills .
+What cheery fellow got the ZIP code 9971 from the U.S. Postal Service in 1963 ?
+What pillar of the Dutch Renaissance painted Aristotle Contemplating the Bust of Homer ?
+What Hungarian cardinal was first a state prisoner and then a refugee in the U.S. embassy 1956-1971 ?
+What famous film and TV cowboy lent his name to a fast food chain ?
+What star-faring race brought about the Inhumans on Marvel 's Earth ?
+What mustachioed comedian portrayed Frankie in North to Alaska ?
+Name of scholar on whose literal translations from the Chinese and Japanese Ezra Pound depended ?
+What comedian created a punch-drunk pugilist named Cauliflower McPugg ?
+What daughter of Henry VIII and Anne Boleyn became queen of England ?
+What was the name of the lawyer who represented Randy Steven Craft ?
+What 's the most common name in nursery rhymes ?
+Name the two youngsters saved by the animated Moby Dick .
+What Russian composer 's Prelude in C Sharp Minor brought him fame and fortune ?
+What heavyweight boxer was known as The Wild Bull of the Pampas ?
+[]
+5
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: human being is more common than abbreviation")
+```
+FINAL: Answer: human being is more common than abbreviation

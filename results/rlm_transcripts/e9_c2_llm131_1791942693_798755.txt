@@ -1,0 +1,114 @@
+Query: In the above data, is label 'numeric value' more common, less common, or the same frequency as label 'abbreviation'? Give your final answer in the form 'Answer: numeric value is [X] abbreviation', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 308,367 characters (~77,091 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'numeric value', 'entity', 'human being', 'location', 'abbreviation', 'description and abstract concept'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[300:1500])
+lines=context.split('\n')
+print(len(lines)); print(lines[5:12])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[300:1500])
+lines = context.split('\n')
+print(len(lines))
+print(lines[5:12])
+```
+OUTPUT:
+ the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jul 28, 2024 || User: 46526 || Instance: What is splatterpunk ?
+Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?
+Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?
+Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?
+Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?
+Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?
+Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?
+Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?
+Date: Nov 12, 2022 || User: 39684 || Instance: What country is famous for Persian rugs ?
+Date: Nov 27, 2023 || User: 78157 || Instance: Where is `` Global Schoolhouse '' ?
+Date: Apr 20, 2024 || User: 57308 || Instance: Whose cupboard was bare ?
+Date: Ma
+3191
+["Date: Mar 25, 2025 || User: 75977 || Instance: Which of the following rock 'n roll stars has a `` star '' on Hollywood Boulevard ?", "Date: Aug 28, 2022 || User: 78860 || Instance: What people make up half the Soviet Union 's population ?", 'Date: Feb 22, 2024 || User: 24676 || Instance: What are the cookies in Internet ?', 'Date: Oct 15, 2023 || User: 34158 || Instance: What does EKG stand for ?', 'Date: Nov 26, 2023 || User: 62469 || Instance: What did Dan Aykroyd and John Belushi quit Saturday Night Live to become ?', 'Date: Apr 24, 2024 || User: 82219 || Instance: CPR is the abbreviation for what ?', "Date: May 28, 2022 || User: 46192 || Instance: What 's the abbreviation for limited partnership ?"]
+
+
+--- turn 2 ---
+```python
+import re
+from collections import Counter
+inst = [l.split('Instance: ',1)[1] for l in context.split('\n') if 'Instance: ' in l]
+print(len(inst))
+labs = ['numeric value','entity','human being','location','abbreviation','description and abstract concept']
+def mk(chunk, start):
+    qs = '\n'.join(f"{start+i}. {q}" for i,q in enumerate(chunk))
+    return ("Classify each question by the category of its answer (TREC style). Categories: "
+            "numeric value, entity, human being, location, abbreviation, description and abstract concept.\n"
+            "Reply with one line per question in the format '<number>: <category>' and nothing else.\n\n"+qs)
+size=50
+chunks=[(s,inst[s:s+size]) for s in range(0,len(inst),size)]
+prompts=[mk(c,s) for s,c in chunks]
+res=[]
+for i in range(0,len(prompts),8):
+    res+=llm_query_batched(prompts[i:i+8])
+pred={}
+for r in res:
+    for m in re.finditer(r'(\d+)\s*:\s*([a-z ]+)',r):
+        n=int(m.group(1)); l=m.group(2).strip()
+        for L in labs:
+            if l.startswith(L[:8]): pred[n]=L
+print(len(pred))
+print(Counter(pred.values()))
+```
+OUTPUT:
+3182
+2930
+Counter({'entity': 558, 'description and abstract concept': 542, 'location': 507, 'abbreviation': 506, 'human being': 456, 'numeric value': 361})
+
+
+--- turn 3 ---
+```python
+missing = [i for i in range(len(inst)) if i not in pred]
+print(len(missing))
+def mk2(idx):
+    qs = '\n'.join(f"{i}. {inst[i]}" for i in idx)
+    return ("Classify each question by the category of its answer (TREC style). Categories: "
+            "numeric value, entity, human being, location, abbreviation, description and abstract concept.\n"
+            "Reply with one line per question in the format '<number>: <category>' and nothing else.\n\n"+qs)
+for _ in range(3):
+    missing = [i for i in range(len(inst)) if i not in pred]
+    if not missing: break
+    groups = [missing[i:i+25] for i in range(0, len(missing), 25)]
+    prompts = [mk2(g) for g in groups]
+    res = []
+    for i in range(0, len(prompts), 8):
+        res += llm_query_batched(prompts[i:i+8])
+    for r in res:
+        for m in re.finditer(r'(\d+)\s*:\s*([a-z ]+)', r):
+            n = int(m.group(1)); l = m.group(2).strip()
+            for L in labs:
+                if l.startswith(L[:8]) and n in missing: pred[n] = L
+print(len(pred))
+c = Counter(pred.values()); print(c)
+n, a = c['numeric value'], c['abbreviation']
+rel = 'more common than' if n > a else 'less common than' if n < a else 'same frequency as'
+print(f"Answer: numeric value is {rel} abbreviation")
+```
+OUTPUT:
+252
+3182
+Counter({'entity': 604, 'description and abstract concept': 588, 'abbreviation': 541, 'location': 537, 'human being': 513, 'numeric value': 399})
+Answer: numeric value is less common than abbreviation
+
+
+--- turn 4 ---
+```python
+FINAL("Answer: numeric value is less common than abbreviation")
+```
+FINAL: Answer: numeric value is less common than abbreviation

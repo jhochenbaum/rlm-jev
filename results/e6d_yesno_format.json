@@ -1,0 +1,38 @@
+{
+ "spam/per_question": {
+  "n": 1000,
+  "positives": 126,
+  "acc": 0.981,
+  "ece": 0.0595,
+  "tokens_per_item": 61.6,
+  "usd": 0.00259,
+  "wall_s": 1.0
+ },
+ "spam/in_state": {
+  "n": 1000,
+  "positives": 126,
+  "acc": 0.978,
+  "ece": 0.0714,
+  "tokens_per_item": 36.7,
+  "usd": 0.00154,
+  "wall_s": 0.34
+ },
+ "person/per_question": {
+  "n": 1000,
+  "positives": 253,
+  "acc": 0.963,
+  "ece": 0.0385,
+  "tokens_per_item": 47.0,
+  "usd": 0.00198,
+  "wall_s": 0.56
+ },
+ "person/in_state": {
+  "n": 1000,
+  "positives": 253,
+  "acc": 0.961,
+  "ece": 0.0755,
+  "tokens_per_item": 26.1,
+  "usd": 0.0011,
+  "wall_s": 0.37
+ }
+}

@@ -1,0 +1,139 @@
+Query: In the above data, is label 'human being' more common, less common, or the same frequency as label 'entity'? Give your final answer in the form 'Answer: human being is [X] entity', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 76,803 characters (~19,200 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+lines = context.split("\n")
+print(len(lines))
+print(lines[5:15])
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Jun 29, 2022 || User: 44436 || Instance: What does IOC stand for ?
+Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?
+Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?
+Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?
+Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?
+Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .
+Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?
+Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?
+Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?
+Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?
+Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?
+Date: May 01, 2024 || User: 
+796
+['Date: Apr 08, 2022 || User: 31080 || Instance: What do the letters D.C. stand for in Washington , D.C. ?', 'Date: May 16, 2022 || User: 52632 || Instance: What is the current unemployment rate in the U.S. ?', 'Date: Jan 20, 2025 || User: 89840 || Instance: What two New York Yankee pitchers swapped wives and families ?', 'Date: Feb 12, 2024 || User: 33449 || Instance: How do you recognize anorexia ?', 'Date: May 16, 2024 || User: 95871 || Instance: Name the child left on a doorstep at the beginning of Gasoline Alley .', 'Date: Nov 19, 2024 || User: 46842 || Instance: Who invented Astroturf ?', 'Date: Jul 24, 2023 || User: 25984 || Instance: What does IBM stand for ?', 'Date: Mar 27, 2024 || User: 88609 || Instance: Where can I find the names of all the 15 Pokemon ?', 'Date: Apr 20, 2023 || User: 16303 || Instance: What is false consciousness ?', 'Date: Apr 05, 2025 || User: 34204 || Instance: How many muscles does an oyster have ?']
+
+
+--- turn 1 ---
+```python
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1))
+print(len(qs))
+
+cats = ['location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity']
+def mk(chunk, start):
+    p = ("Classify each question by the category of its answer, using exactly one of: "
+         "'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n"
+         "(TREC-style: entity = things/animals/products/food/etc; human being = person/group/individual; "
+         "abbreviation = abbreviations or expansions; description = definitions, reasons, manner.)\n"
+         "Output one line per question in the format 'index: label' and nothing else.\n\n")
+    for i, q in enumerate(chunk):
+        p += f"{start+i}: {q}\n"
+    return p
+
+size = 50
+chunks = [(s, qs[s:s+size]) for s in range(0, len(qs), size)]
+prompts = [mk(c, s) for s, c in chunks]
+res = []
+for i in range(0, len(prompts), 8):
+    res += llm_query_batched(prompts[i:i+8])
+
+labels = {}
+for r in res:
+    for line in r.split("\n"):
+        m = re.match(r"\s*(\d+)\s*:\s*(.+?)\s*$", line)
+        if m:
+            lab = m.group(2).strip().strip("'\"").lower()
+            if lab in cats: labels[int(m.group(1))] = lab
+print(len(labels))
+from collections import Counter
+print(Counter(labels.values()))
+```
+OUTPUT:
+787
+776
+Counter({'abbreviation': 170, 'numeric value': 155, 'location': 126, 'human being': 121, 'description and abstract concept': 118, 'entity': 86})
+
+
+--- turn 2 ---
+```python
+missing = [i for i in range(len(qs)) if i not in labels]
+print(missing)
+import random
+random.seed(0)
+abbr = [i for i,l in labels.items() if l=='abbreviation']
+for i in random.sample(abbr, 25):
+    print(i, qs[i])
+```
+OUTPUT:
+[4, 9, 13, 22, 24, 34, 37, 39, 40, 42, 45]
+486 What does Ms. , Miss , and Mrs. stand for ?
+529 What is the abbreviation for Original Equipment Manufacturer ?
+64 What is HDLC ?
+349 What does S.O.S. stand for ?
+638 What does the T.S. stand for in T.S. Eliot 's name ?
+623 What is the acronym for the National Bureau of Investigation ?
+502 What does the abbreviation cwt. ?
+393 What does the abbreviation OAS stand for ?
+619 CNN is the abbreviation for what ?
+463 What is SAP ?
+709 What is AFS ?
+295 What does G.M.T. stand for ?
+635 What is RCD ?
+196 What is DTMF ?
+382 What does A&W of root beer fame stand for ?
+731 What is the abbreviation of General Motors ?
+153 CNN is the abbreviation for what ?
+328 What does VCR stand for ?
+660 What does SIDS stand for ?
+203 What does pH stand for ?
+401 What does snafu stand for ?
+156 What is SVHS ?
+109 What does R.E.M. stand for , as in the rock group R.E.M. ?
+420 What is DTMF ?
+596 What is the abbreviation of the International Olympic Committee ?
+
+
+--- turn 3 ---
+```python
+missing = [i for i in range(len(qs)) if i not in labels]
+p = mk([qs[i] for i in missing], 0)
+# use real indices
+p = ("Classify each question by the category of its answer, using exactly one of: "
+     "'location', 'numeric value', 'description and abstract concept', 'abbreviation', 'human being', 'entity'.\n"
+     "Output one line per question in the format 'index: label' and nothing else.\n\n")
+for i in missing:
+    p += f"{i}: {qs[i]}\n"
+r = llm_query(p)
+for line in r.split("\n"):
+    m = re.match(r"\s*(\d+)\s*:\s*(.+?)\s*$", line)
+    if m:
+        lab = m.group(2).strip().strip("'\"").lower()
+        if lab in cats: labels[int(m.group(1))] = lab
+c = Counter(labels.values())
+print(len(labels), c)
+hb, en = c['human being'], c['entity']
+rel = 'more common than' if hb > en else 'less common than' if hb < en else 'same frequency as'
+FINAL(f"Answer: human being is {rel} entity")
+```
+FINAL: Answer: human being is more common than entity

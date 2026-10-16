@@ -1,0 +1,15 @@
+{
+ "n": 1000,
+ "jev_ensemble": 0.723,
+ "haiku_cli_thinking": {
+  "acc": 0.762,
+  "parse_ok": 0.9,
+  "wall_s": 53.3
+ },
+ "haiku_api_no_thinking": {
+  "acc": 0.782,
+  "parse_ok": 1.0,
+  "usd_list": 0.00624,
+  "wall_s": 9.3
+ }
+}

@@ -1,0 +1,285 @@
+Query: In the above data, how many data points should be classified as label 'human being'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">lines = context.split("\n")
+print(context[:1200])
+print(len(lines))
+print(lines[-5:])</parameter>
+</invoke>
+
+
+
+<invoke name="python">
+<parameter name="code">print(context[300:1500])</parameter>
+</invoke>
+
+
+
+<invoke name="python">
+<parameter name="code">import re
+qs = [l for l in lines[3:] if l.strip()]
+print(len(qs)); print(qs[:5])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">lines = context.split("\n")
+print(len(lines))
+print(context[300:1200])
+print(lines[-3:])</parameter>
+</invoke>
+```
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 2 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">lines = context.split("\n")
+print(len(lines))
+print(context[300:1200])
+print(lines[-3:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 3 ---
+```python
+lines = context.split("\n")
+print(len(lines))
+print(context[300:1200])
+print(lines[-3:])
+```
+OUTPUT:
+796
+the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: 
+['You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.', '', '']
+
+
+--- turn 4 ---
+```python
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l) if 're' in globals() else None
+import re
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1).strip())
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'location': 'answer is a place: country, city, mountain, river, address, etc.',
+ 'human being': 'answer is a person or group of people: an individual, a name, a title of a person, an organization of people',
+ 'entity': 'answer is a thing: animal, body part, color, creation, currency, disease, event, food, instrument, language, product, plant, sport, substance, symbol, technique, vehicle, word',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'numeric value': 'answer is a number: count, date, distance, money, order, percentage, period of time, speed, temperature, size, weight',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+res = jev_classify(uq, labels, "What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+from collections import Counter
+c = Counter(pred[q] for q in qs)
+print(c)
+</parameter>
+```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 24
+    </parameter>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 5 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">import re
+from collections import Counter
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1).strip())
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'location': 'answer is a place: country, city, mountain, river, address, etc.',
+ 'human being': 'answer is a person or group of people: an individual, a name, a title of a person, an organization of people',
+ 'entity': 'answer is a thing: animal, body part, color, creation, currency, disease, event, food, instrument, language, product, plant, sport, substance, symbol, technique, vehicle, word',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'numeric value': 'answer is a number: count, date, distance, money, order, percentage, period of time, speed, temperature, size, weight',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+res = jev_classify(uq, labels, "What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+</parameter>
+</invoke>
+```
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 6 ---
+```python
+import re
+from collections import Counter
+lines = context.split("\n")
+qs = []
+for l in lines:
+    m = re.match(r"Date: .*? \|\| User: \d+ \|\| Instance: (.*)", l)
+    if m: qs.append(m.group(1).strip())
+print(len(qs), len(set(qs)))
+uq = list(set(qs))
+labels = {
+ 'location': 'answer is a place: country, city, mountain, river, address, etc.',
+ 'human being': 'answer is a person or group of people: an individual, a name, a title of a person, an organization of people',
+ 'entity': 'answer is a thing: animal, body part, color, creation, currency, disease, event, food, instrument, language, product, plant, sport, substance, symbol, technique, vehicle, word',
+ 'abbreviation': 'answer is an abbreviation or expansion of an abbreviation',
+ 'numeric value': 'answer is a number: count, date, distance, money, order, percentage, period of time, speed, temperature, size, weight',
+ 'description and abstract concept': 'answer is a description, definition, manner, reason, or abstract concept',
+}
+res = jev_classify(uq, labels, "What category does the answer to this question belong to?")
+pred = {q: max(r, key=r.get) for q, r in zip(uq, res)}
+c = Counter(pred[q] for q in qs)
+print(c)
+```
+OUTPUT:
+787 732
+Counter({'entity': 187, 'human being': 154, 'abbreviation': 123, 'numeric value': 117, 'description and abstract concept': 108, 'location': 98})
+
+
+--- turn 7 ---
+```python
+import random
+random.seed(0)
+for lab in ['abbreviation', 'human being']:
+    items = [q for q in uq if pred[q] == lab]
+    print("==", lab, len(items))
+    for q in random.sample(items, 25):
+        r = res[uq.index(q)]
+        print(round(r[lab], 2), q)
+```
+OUTPUT:
+== abbreviation 72
+0.9 What does the word LASER mean ?
+0.97 What is the acronym for the rating system for air conditioner efficiency ?
+0.83 What does `` B.Y.O.B. '' mean ?
+0.82 What is DSL ?
+0.96 What does RCA stand for ?
+0.98 What do the letters D.C. stand for in Washington , D.C. ?
+0.92 What does snafu stand for ?
+0.93 What does pH stand for ?
+1.0 What is the abbreviated form of the National Bureau of Investigation ?
+1.0 What is the abbreviation of the International Olympic Committee ?
+0.92 What does Ms. , Miss , and Mrs. stand for ?
+0.86 What is the full name of the PLO ?
+0.98 What does R.E.M. stand for , as in the rock group R.E.M. ?
+0.81 What is DTMF ?
+0.91 What is RCD ?
+0.71 What is HDLC ?
+0.97 What does SHIELD stand for ?
+0.89 What is the correct way to abbreviate cc. at the bottom of a business letter ?
+0.91 What does the abbreviation AIDS stand for ?
+0.84 What is LMDS ?
+0.97 In a computer , what does SCSI mean ?
+1.0 What is the abbreviation of the National Bureau of Investigation ?
+0.96 What does e.g. stand for ?
+0.97 What does NASDAQ stand for ?
+0.86 What does the T.S. stand for in T.S. Eliot 's name ?
+== human being 154
+1.0 What are the first names of the famous husband-and-wife acting team of Lunt and Fontanne ?
+1.0 Who does the voices of the Simpsons ?
+0.79 What Good Little Witch is Casper 's girlfriend ?
+0.99 Who graced the airwaves with such pearls as `` Do ya lo-o-ove me ? Get naked , baby ! '' ?
+0.97 Who did Jackie Kennedy commission to write The Death of a President ?
+1.0 What king was forced to agree to the Magna Carta ?
+1.0 What U.S. vice-president once declared : `` If you 've seen one slum , you 've seen them all '' ?
+0.55 What was the nickname of model Leslie Hornby ?
+0.99 Who coined the term NN cyberspace `` in his novel NN Neuromancer '' ?
+1.0 Who was the accused in The Trial of the Century , which opened Janurary 1 , 1935 ?
+1.0 What is the present Pope named ?
+0.83 What star-faring race brought about the Inhumans on Marvel 's Earth ?
+0.9 Who won the first World Series ?
+1.0 Who was the first coach of the Cleveland Browns ?
+1.0 Who are the top ten richest people in the world ?
+0.98 Who was the tallest U.S. president ?
+0.8 Who awarded The Flying Fickle Finger of Fate ?
+0.99 What robust U.S. President imported his own instructor after seeing a judo match ?
+1.0 Who directed `` Jaws '' ?
+1.0 Who wrote the book , `` Song of Solomon '' ?
+0.99 Who is Prince Naseem Hamed ?
+1.0 What 1920s cowboy star rode Tony the Wonder Horse ?
+1.0 What poet wrote : `` ... I have promises to keep , and miles to go before I sleep '' ?
+1.0 Who won two gold medals in skiing in the Olympic Games in Calgary ?
+1.0 What actor has a tattoo on his right wrist reading Scotland Forever ?
+
+
+--- turn 8 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">hb = [(res[uq.index(q)]['human being'], q) for q in uq]
+low = sorted([x for x in hb if pred[x[1]]=='human being' and x[0]<0.7])
+print(len(low))
+for p,q in low: print(round(p,2), q)
+print("--- near misses")
+near = sorted([x for x in hb if pred[x[1]]!='human being' and x[0]>0.25], reverse=True)
+for p,q in near: print(round(p,2), pred[q][:5], q)
+</parameter>
+</invoke>
+```
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 9 ---
+```python
+hb = [(res[uq.index(q)]['human being'], q) for q in uq]
+low = sorted([x for x in hb if pred[x[1]]=='human being' and x[0]<0.7])
+print(len(low))
+for p,q in low: print(round(p,2), q)
+print("--- near misses")
+near = sorted([x for x in hb if pred[x[1]]!='human being' and x[0]>0.25], reverse=True)
+for p,q in near: print(round(p,2), pred[q][:5], q)
+```
+OUTPUT:
+8
+0.34 What is the origin of the proverb `` A stitch in time saves nine '' ?
+0.4 Where can I get cotton textiles importer details ?
+0.51 What was the nickname of Frederick I , Holy Roman Emperor and King of Germany ?
+0.55 What was the nickname of model Leslie Hornby ?
+0.62 Who does the advertizing for Frito-Lay ?
+0.65 What is a geoscientist ?
+0.66 What is a neurosurgeon ?
+0.69 What famous film and TV cowboy lent his name to a fast food chain ?
+--- near misses
+0.49 entit Who markets Spaghetti-o 's ?
+0.38 abbre What does A&W of root beer fame stand for ?
+0.34 locat Where are the leading medical groups specializing in lung diseases ?
+0.34 entit What is `` the bear of beers '' ?
+0.34 descr What does the word affiant mean ?
+0.32 entit What major airline has the best safety record in the world ?
+0.3 descr What does JESSICA mean ?
+0.3 entit What 's the name of the tiger that advertises for Frosted Flakes cereal ?
+0.29 entit What other name were the `` Little Rascals '' known as ?
+0.27 entit What book is subtitled The Preservation of Favoured Races in the Struggle for Life ?
+

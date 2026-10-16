@@ -1,0 +1,112 @@
+Query: In the above data, how many data points should be classified as label 'entity'? Give your final answer in the form 'Answer: number'.
+
+`context` is a str of 78,138 characters (~19,534 tokens). First 300 chars:
+"The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.\n\nYou will be asked to answer questions about "
+
+--- turn 0 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-600:])
+lines = context.split('\n')
+print(len(lines))
+</br>```
+OUTPUT:
+
+Traceback (most recent call last):
+  File "jevlab/rlm.py", line 197, in run_rlm
+    exec(code[0], ns)
+  File "<string>", line 6
+    </br>
+    ^
+SyntaxError: invalid syntax
+
+
+--- turn 1 ---
+```python
+print(context[:1500])
+print('....')
+print(context[-600:])
+lines = context.split('\n')
+print(len(lines))
+```
+OUTPUT:
+The following lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Apr 18, 2022 || User: 35142 || Instance: What does NAFTA stand for ?
+Date: Feb 17, 2023 || User: 85055 || Instance: What does A&W of root beer fame stand for ?
+Date: Apr 06, 2022 || User: 26503 || Instance: What is the name of the vaccine for chicken pox ?
+Date: Nov 16, 2024 || User: 92741 || Instance: What was the name of the American ship sunk by a mine in Havana harbor , causing the Spanish-American war ?
+Date: Dec 22, 2022 || User: 72517 || Instance: How long does it take the Milky Way Galaxy to make one revolution ?
+Date: Jun 18, 2023 || User: 35618 || Instance: What Cherokee Indian gave his name to a tree ?
+Date: Nov 25, 2023 || User: 42241 || Instance: Who is the superstar in rent-a-cars ?
+Date: Aug 09, 2022 || User: 58652 || Instance: What does LOL mean ?
+Date: May 23, 2025 || User: 50108 || Instance: Where did the Japanese Imperial Forces surrender to end WWII ?
+Date: Apr 17, 2022 || User: 87943 || Instance: What is the abbreviation of the International Olympic Committee ?
+Date: Jan 04, 2
+....
+Date: Sep 02, 2024 || User: 26503 || Instance: When Mighty Mouse was conceived , what was his original name ?
+Recall: the preceding lines contain 787 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'location', 'human being', 'entity', 'abbreviation', 'numeric value', 'description and abstract concept'.
+
+You will be asked to answer questions about the aggregate label statistics across all 787 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+796
+
+
+--- turn 2 ---
+```python
+import re
+data = [l for l in lines if l.startswith('Date:') and '|| Instance:' in l]
+qs = [l.split('Instance:',1)[1].strip() for l in data]
+print(len(qs))
+
+labels_desc = """Categories (TREC question classification):
+- location: answer is a place (city, country, mountain, etc.)
+- human being: answer is a person, group, or organization of people
+- entity: answer is a thing: animal, body part, color, creative work, currency, disease, event, food, instrument, language, letter, plant, product, religion, sport, substance, symbol, technique, term, vehicle, word, other object
+- abbreviation: answer is an abbreviation or expansion of one
+- numeric value: count, date, distance, money, order, percent, period, speed, temperature, size, weight, code
+- description and abstract concept: definition, description, manner, reason, abstract concept
+"""
+def mkprompt(chunk, start):
+    body = "\n".join(f"{start+i}. {q}" for i,q in enumerate(chunk))
+    return labels_desc + "\nClassify each question below into exactly one category. Reply with one line per question in the form '<number>: <category>' where category is one of: location, human being, entity, abbreviation, numeric value, description and abstract concept. No other text.\n\n" + body
+
+size = 50
+prompts, starts = [], []
+for s in range(0, len(qs), size):
+    prompts.append(mkprompt(qs[s:s+size], s)); starts.append(s)
+results = []
+for i in range(0, len(prompts), 8):
+    results += llm_query_batched(prompts[i:i+8])
+
+pred = {}
+for r in results:
+    for line in r.split('\n'):
+        m = re.match(r'\s*(\d+)\s*[:.)-]\s*(.+?)\s*$', line)
+        if m:
+            c = m.group(2).lower()
+            for k in ['description and abstract concept','human being','numeric value','abbreviation','location','entity']:
+                if k in c:
+                    pred[int(m.group(1))] = k; break
+print(len(pred))
+from collections import Counter
+print(Counter(pred.values()))
+missing = [i for i in range(len(qs)) if i not in pred]
+print(missing[:20])
+```
+OUTPUT:
+787
+787
+Counter({'entity': 178, 'human being': 154, 'abbreviation': 129, 'numeric value': 118, 'description and abstract concept': 108, 'location': 100})
+[]
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: 178")
+```
+FINAL: Answer: 178

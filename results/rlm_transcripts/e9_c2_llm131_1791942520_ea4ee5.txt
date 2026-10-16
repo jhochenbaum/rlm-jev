@@ -1,0 +1,75 @@
+Query: In the above data, is label 'description and abstract concept' more common, less common, or the same frequency as label 'numeric value'? Give your final answer in the form 'Answer: description and abstract concept is [X] numeric value', where [X] is 'more common than', 'less common than', or 'same frequency as'.
+
+`context` is a str of 316,769 characters (~79,192 tokens). First 300 chars:
+"The following lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.\n\nYou will be asked to answer questions about"
+
+--- turn 0 ---
+ASSISTANT:
+
+<invoke name="python">
+<parameter name="code">print(context[300:1500]); print(context[-500:])</parameter>
+</invoke>
+SYSTEM: no python block found; reply with one ```python block.
+
+--- turn 1 ---
+```python
+print(context[300:1500]); print(context[-500:])
+```
+OUTPUT:
+ the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+Date: Sep 06, 2023 || User: 14512 || Instance: What is a tonne ?
+Date: Jun 21, 2023 || User: 16295 || Instance: Where is the Orange Bowl ?
+Date: Jan 14, 2024 || User: 98142 || Instance: What king is satirized in the line : `` The King was in the countinghouse , counting all his money '' ?
+Date: Sep 11, 2024 || User: 40405 || Instance: On average , how long time does it take to type a screenplay ?
+Date: Jan 09, 2024 || User: 17518 || Instance: What articles of clothing are tokens in Monopoly ?
+Date: Feb 26, 2024 || User: 80488 || Instance: What U.S. President was the first to breed mules ?
+Date: Jul 15, 2024 || User: 58192 || Instance: CPR is the abbreviation for what ?
+Date: May 13, 2023 || User: 45605 || Instance: How many teats does a female goat sport ?
+Date: Jun 12, 2024 || User: 21600 || Instance: What President was buried at his ancestral home overlooking the Hudson River at Hyde Park , New York ?
+Date: Apr 19, 2023 || User: 37367 || Instance: When was the first practical commercial typewriter m
+d for ?
+Recall: the preceding lines contain 3182 general-knowledge questions, one per line. Each question has an answer that can be described as one of 6 categories: 'description and abstract concept', 'entity', 'human being', 'numeric value', 'location', 'abbreviation'.
+
+You will be asked to answer questions about the aggregate label statistics across all 3182 examples in this dataset. Do not try to guess, estimate, or approximate the result. Calculate the exact answer given these datapoints.
+
+
+
+
+--- turn 2 ---
+```python
+import re
+lines = [l.split("Instance: ",1)[1] for l in context.split("\n") if "|| Instance: " in l]
+print(len(lines))
+cats = ['description and abstract concept','entity','human being','numeric value','location','abbreviation']
+def mk(chunk):
+    q = "\n".join(f"{i+1}. {t}" for i,t in enumerate(chunk))
+    return ("Classify each question by its answer type into exactly one of: description and abstract concept, entity, human being, numeric value, location, abbreviation.\n"
+            "Reply with one line per question formatted 'N: label', nothing else.\n\n"+q)
+chunks = [lines[i:i+60] for i in range(0,len(lines),60)]
+prompts = [mk(c) for c in chunks]
+outs = []
+for i in range(0,len(prompts),8):
+    outs += llm_query_batched(prompts[i:i+8])
+from collections import Counter
+cnt = Counter()
+for o in outs:
+    for l in o.split("\n"):
+        m = re.match(r"\s*\d+\s*[:.]\s*(.+?)\s*$", l)
+        if m:
+            lab = m.group(1).lower().strip()
+            for c in cats:
+                if c in lab:
+                    cnt[c]+=1; break
+print(cnt, sum(cnt.values()))
+```
+OUTPUT:
+3182
+Counter({'numeric value': 949, 'entity': 760, 'human being': 430, 'description and abstract concept': 360, 'location': 326, 'abbreviation': 297}) 3122
+
+
+--- turn 3 ---
+```python
+FINAL("Answer: description and abstract concept is less common than numeric value")
+```
+FINAL: Answer: description and abstract concept is less common than numeric value
